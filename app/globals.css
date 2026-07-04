@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy-950: #070F1C;
+  --navy-900: #0C1829;
+  --navy-800: #152340;
+  --gold: #B8882A;
+  --gold-light: #D4A84B;
+  --bone: #F4F1EA;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #070F1C;
+  color: #F4F1EA;
+}
+
+/* ── SCROLL REVEAL ── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-reveal][data-delay="1"] { transition-delay: 0.12s; }
+[data-reveal][data-delay="2"] { transition-delay: 0.24s; }
+[data-reveal][data-delay="3"] { transition-delay: 0.36s; }
+[data-reveal][data-delay="4"] { transition-delay: 0.48s; }
+[data-reveal][data-delay="5"] { transition-delay: 0.60s; }
+
+/* ── NOISE TEXTURE ── */
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  background-repeat: repeat;
+}
+
+/* ── MARQUEE ── */
+.marquee-fade {
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+/* ── SERVICE ROW HOVER ── */
+.service-row {
+  transition: background 0.35s ease;
+}
+.service-row:hover {
+  background: rgba(12,24,41,0.04);
+}
+.service-row:hover .service-name {
+  color: #B8882A;
+}
+.service-row:hover .service-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.service-arrow {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ── GOLD CTA — concrete hex for Lighthouse contrast detection ── */
+.btn-gold-cta {
+  background-color: #B8882A;
+  color: #070F1C;
+}
+.btn-gold-cta:hover {
+  background-color: #8B6520;
+}
+
+/* ── GOLD DIVIDER LINE ── */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #B8882A 20%, #B8882A 80%, transparent);
+}
+
+/* ── CREST HORIZONTAL BAR MOTIF ── */
+.crest-bar-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(184,136,42,0.65));
+}
+.crest-bar-line.reverse {
+  background: linear-gradient(to left, transparent, rgba(184,136,42,0.65));
+}
+
+/* ── SELECTION ── */
+::selection {
+  background: #B8882A;
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid #B8882A;
+  outline-offset: 3px;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #070F1C; }
+::-webkit-scrollbar-thumb { background: rgba(184,136,42,0.5); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #B8882A; }
+
+/* ── iOS SAFARI: prevent auto-zoom on input focus (requires font-size >= 16px) ── */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .font-display { font-family: var(--font-playfair), Georgia, serif; }
+}

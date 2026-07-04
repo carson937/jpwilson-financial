@@ -113,14 +113,14 @@ export default function FinalCTA() {
                   </svg>
                   <div>
                     <p className="text-white/70 text-sm font-semibold">{title}</p>
-                    <p className="text-white/35 text-xs">{body}</p>
+                    <p className="text-white/55 text-xs">{body}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="mt-10 pt-10 border-t border-white/8">
-              <p className="text-white/25 text-xs mb-1">Prefer to call directly?</p>
+              <p className="text-white/55 text-xs mb-1">Prefer to call directly?</p>
               <a
                 href="tel:+18667861585"
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-semibold text-sm transition-colors"
@@ -142,8 +142,8 @@ export default function FinalCTA() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="font-serif text-white font-bold text-lg mb-2 italic">Request Received.</h3>
-                <p className="text-white/40 text-sm leading-relaxed mb-6">
+                <h2 className="font-serif text-white font-bold text-lg mb-2 italic">Request Received.</h2>
+                <p className="text-white/65 text-sm leading-relaxed mb-6">
                   An advisor will reach out within <strong className="text-white/70">24 hours</strong> — usually same day.
                 </p>
                 <a
@@ -158,10 +158,10 @@ export default function FinalCTA() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-7 md:p-8">
-                <h3 className="font-serif text-white font-bold text-lg mb-1 italic">
+                <h2 className="font-serif text-white font-bold text-lg mb-1 italic">
                   Request Your Free Review
-                </h3>
-                <p className="text-white/25 text-[11px] mb-6 tracking-wide">
+                </h2>
+                <p className="text-white/55 text-[11px] mb-6 tracking-wide">
                   No obligation. An advisor responds within 24 hours.
                 </p>
 
@@ -172,7 +172,7 @@ export default function FinalCTA() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors"
+                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
                   />
                   <input
                     type="tel"
@@ -180,12 +180,13 @@ export default function FinalCTA() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
-                    className="w-full bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors"
+                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
                   />
                   <select
                     value={coverage}
                     onChange={(e) => setCoverage(e.target.value)}
-                    className="w-full bg-navy-950 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-gold/50 transition-colors appearance-none"
+                    aria-label="Coverage type"
+                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-gold/50 transition-colors rounded-none"
                     style={{ color: coverage ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)' }}
                   >
                     <option value="" disabled>Coverage type (optional)</option>
@@ -198,7 +199,7 @@ export default function FinalCTA() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
-                    className="w-full bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors resize-none"
+                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors resize-none rounded-none"
                   />
                 </div>
 
@@ -214,7 +215,7 @@ export default function FinalCTA() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-gold hover:bg-gold-dark text-white font-semibold text-sm py-4 transition-colors duration-300 disabled:opacity-60 flex items-center justify-center gap-2 tracking-wide"
+                  className="w-full bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm py-4 transition-colors duration-300 disabled:opacity-60 flex items-center justify-center gap-2 tracking-wide"
                 >
                   {submitting ? (
                     <>
@@ -233,7 +234,7 @@ export default function FinalCTA() {
                     </>
                   )}
                 </button>
-                <p className="text-center text-white/15 text-[10px] mt-3">
+                <p className="text-center text-white/55 text-[10px] mt-3">
                   No spam. No obligation. We never sell your information.
                 </p>
               </form>
