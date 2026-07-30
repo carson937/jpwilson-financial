@@ -1,16 +1,22 @@
-import CrestLogo from './CrestLogo'
+import { BrandCrest } from './BrandLogo'
+import { OFFICE, licensedStatesSentence } from '@/lib/licensedStates'
 
+// Health and Medicare are listed adjacently at equal weight by client direction.
 const serviceLinks = [
+  { label: 'Health Insurance', href: '#services' },
   { label: 'Medicare Insurance', href: '#services' },
   { label: 'Life Insurance', href: '#services' },
-  { label: 'Business Insurance', href: '#services' },
+  { label: 'Business & Commercial Insurance', href: '#services' },
+  { label: 'General Liability', href: '#services' },
+  { label: 'Workers’ Compensation', href: '#services' },
   { label: 'Auto Insurance', href: '#services' },
-  { label: 'Home Insurance', href: '#services' },
+  { label: 'Homeowners & Renters Insurance', href: '#services' },
 ]
 
 const companyLinks = [
+  { label: 'About Patrick', href: '#about' },
+  { label: 'Licensed to Serve', href: '#licensed' },
   { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Client Reviews', href: '#testimonials' },
   { label: 'FAQ', href: '#faq' },
   { label: 'Get a Quote', href: '#get-quote' },
 ]
@@ -23,18 +29,24 @@ export default function Footer() {
 
           {/* Brand */}
           <div className="md:col-span-1">
+            {/*
+              Official crest only. The supplied wordmark is dark navy ink on
+              white and there is no reversed master yet, so it is not placed on
+              this near-black footer. The brand name is carried in the legal bar
+              below.
+            */}
             <div className="mb-5">
-              <CrestLogo size={64} className="mb-4" />
-              <p className="font-serif text-sm font-bold text-white/80 leading-tight">J.P. Wilson</p>
-              <p className="text-[10px] text-gold tracking-[0.15em] uppercase mt-0.5">Financial Group</p>
+              <BrandCrest size={64} className="mb-4" />
+              <p className="font-serif text-sm font-bold text-white/80 leading-tight">Patrick Wilson</p>
+              <p className="text-[10px] text-gold tracking-[0.15em] uppercase mt-0.5">Financial</p>
             </div>
             <p className="text-sm leading-relaxed mb-6 max-w-[220px]">
-              Independent insurance experts comparing 30+ top carriers to find you
-              better coverage at the right price.
+              Independent insurance guidance for individuals, families, and
+              businesses.
             </p>
             <a
               href="tel:+18667861585"
-              className="text-gold font-semibold text-sm hover:text-gold-light transition-colors duration-200"
+              className="inline-block py-1 text-gold font-semibold text-sm hover:text-gold-light transition-colors duration-200"
             >
               (866) 786-1585
             </a>
@@ -50,7 +62,7 @@ export default function Footer() {
                 <li key={label}>
                   <a
                     href={href}
-                    className="text-sm hover:text-white/70 transition-colors duration-200"
+                    className="inline-block py-1 text-sm hover:text-white/70 transition-colors duration-200"
                   >
                     {label}
                   </a>
@@ -69,7 +81,7 @@ export default function Footer() {
                 <li key={label}>
                   <a
                     href={href}
-                    className="text-sm hover:text-white/70 transition-colors duration-200"
+                    className="inline-block py-1 text-sm hover:text-white/70 transition-colors duration-200"
                   >
                     {label}
                   </a>
@@ -86,15 +98,19 @@ export default function Footer() {
             <div className="space-y-4 text-sm">
               <div>
                 <p className="text-white/55 text-[10px] uppercase tracking-[0.15em] mb-1">Phone</p>
-                <a href="tel:+18667861585" className="hover:text-white/70 transition-colors duration-200">
+                <a href="tel:+18667861585" className="inline-block py-1 hover:text-white/70 transition-colors duration-200">
                   (866) 786-1585
                 </a>
               </div>
               <div>
                 <p className="text-white/55 text-[10px] uppercase tracking-[0.15em] mb-1">Email</p>
+                {/* `break-words` is load-bearing: at md the footer becomes four
+                    ~127px columns and this 206px address otherwise overhangs the
+                    viewport, which only `body { overflow-x: hidden }` was
+                    masking. Matches LicensedToServe, which already wraps it. */}
                 <a
                   href="mailto:contact@jpwilsonfinancial.com"
-                  className="hover:text-white/70 transition-colors duration-200"
+                  className="block py-1 break-words [overflow-wrap:anywhere] hover:text-white/70 transition-colors duration-200"
                 >
                   contact@jpwilsonfinancial.com
                 </a>
@@ -104,8 +120,24 @@ export default function Footer() {
                 <p>Mon – Fri, 9am – 5pm EST</p>
               </div>
               <div>
-                <p className="text-white/55 text-[10px] uppercase tracking-[0.15em] mb-1">Licensed In</p>
-                <p>South Carolina &amp; North Carolina</p>
+                <p className="text-white/55 text-[10px] uppercase tracking-[0.15em] mb-1">Office</p>
+                <a
+                  href={OFFICE.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="not-italic hover:text-white/70 transition-colors duration-200"
+                >
+                  <address className="not-italic leading-relaxed">
+                    {OFFICE.street}
+                    <br />
+                    {OFFICE.city}, {OFFICE.state} {OFFICE.zip}
+                  </address>
+                </a>
+              </div>
+              <div>
+                <p className="text-white/55 text-[10px] uppercase tracking-[0.15em] mb-1">Licensed States</p>
+                <p className="leading-relaxed">{licensedStatesSentence()}</p>
+                <p className="text-white/60 text-xs mt-1">Charlotte is our only office.</p>
               </div>
             </div>
           </div>
@@ -114,16 +146,16 @@ export default function Footer() {
         {/* Legal bar */}
         <div className="border-t border-white/6 pt-8 flex flex-col md:flex-row justify-between gap-4 text-[11px] text-white/45">
           <p>
-            &copy; {new Date().getFullYear()} JP Wilson Financial Group. All rights reserved.
+            &copy; {new Date().getFullYear()} Patrick Wilson Financial. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="/privacy" className="hover:text-white/35 transition-colors duration-200">
+            <a href="/privacy" className="inline-block py-1 hover:text-white/35 transition-colors duration-200">
               Privacy Policy
             </a>
-            <a href="/terms" className="hover:text-white/35 transition-colors duration-200">
+            <a href="/terms" className="inline-block py-1 hover:text-white/35 transition-colors duration-200">
               Terms of Service
             </a>
-            <span>Licensed Insurance Agent · SC &amp; NC</span>
+            <span>Charlotte, NC</span>
           </div>
         </div>
       </div>

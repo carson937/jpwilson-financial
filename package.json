@@ -6,10 +6,11 @@
     "dev": "next dev -p 3004",
     "build": "next build",
     "start": "next start -p 3004",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "14.2.3",
+    "next": "^14.2.35",
     "react": "^18",
     "react-dom": "^18"
   },
@@ -19,8 +20,8 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
-    "eslint-config-next": "14.2.3",
-    "postcss": "^8",
+    "eslint-config-next": "^14.2.35",
+    "postcss": "^8.5.25",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }

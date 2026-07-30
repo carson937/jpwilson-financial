@@ -7,11 +7,13 @@
 - **Vercel project ID:** `prj_4ZhE9c2KIms5bykgCqHlK1SKoghR`
 - **Aliases:** `jpwilsonfinancial.com`, `jpwilson-financial.vercel.app`
 - **Stack:** Next.js + React + Tailwind
-- **Canonical path:** `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial/`
+- **Canonical path:** `/Users/carsonwilson/Projects/jpwilson-financial`
+- **Retired path (do not use):** `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial/`
 - **Client workspace:** `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/CLIENT_PROJECTS/jp-wilson/`
 - **Deploy platform:** Vercel (single-platform)
 - **GitHub:** `git@github.com:carson937/jpwilson-financial.git`
 - **Locked:** 2026-07-04
+- **Relocated to `~/Projects`:** 2026-07-30 after full source recovery
 
 ## Do not edit anywhere else.
 
@@ -20,7 +22,7 @@ This is the sole deploy-linked source folder. No fork, no duplicate.
 ## Deploy
 
 ```bash
-cd ~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial
+cd /Users/carsonwilson/Projects/jpwilson-financial
 bunx vercel --prod
 ```
 
@@ -48,4 +50,4 @@ If unexpected behavior appears, cross-reference:
 
 - **Jotform lead form:** ID `261496542238059` (hardcoded per `.env.example` — no server env vars required)
 - **Zapier flow:** Zap `#368000737` — leads Jotform → EZLynx
-- **EZLynx Sales Center:** ongoing fix in progress (403 unauthorized issue per `CLIENT_PROJECTS/_INDEX.md`)
+- **EZLynx Sales Center:** end-to-end test confirmed — a visible Sales Center opportunity was created. The earlier 403 is resolved. One controlled live production test is still required after deployment.

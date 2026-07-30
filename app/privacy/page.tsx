@@ -1,10 +1,19 @@
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
+
 export const metadata = {
-  title: 'Privacy Policy — JP Wilson Financial Group',
+  title: 'Privacy Policy | Patrick Wilson Financial',
+  // Without this the root layout's `alternates.canonical: '/'` is
+  // inherited, telling search engines this page is a duplicate of the
+  // homepage.
+  alternates: { canonical: '/privacy' },
 }
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-white pt-32 pb-24">
+    <>
+      <Nav />
+      <main id="main" className="min-h-[100svh] bg-white pt-32 pb-24">
       <div className="max-w-3xl mx-auto px-6 lg:px-8">
         <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gold mb-4">
           Legal
@@ -14,14 +23,14 @@ export default function PrivacyPage() {
         </h1>
 
         <div className="prose prose-sm max-w-none text-navy-800/70 space-y-8 leading-relaxed">
-          <p className="text-sm">Last updated: {new Date().getFullYear()}</p>
+          <p className="text-sm">Last updated: July 21, 2026</p>
 
           <section>
             <h2 className="text-navy-950 font-bold text-lg mb-3">Information We Collect</h2>
             <p>
               When you request a quote or contact us, we collect your name, phone number,
               email address, and information about your insurance needs. This information is
-              used solely to provide you with insurance quotes and follow-up from a licensed advisor.
+              used solely to provide insurance quote follow-up from Patrick Wilson Financial.
             </p>
           </section>
 
@@ -82,6 +91,8 @@ export default function PrivacyPage() {
           </a>
         </div>
       </div>
-    </main>
+      </main>
+      <Footer />
+    </>
   )
 }

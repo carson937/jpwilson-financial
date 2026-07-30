@@ -2,22 +2,22 @@ const steps = [
   {
     num: '01',
     title: 'Tell Us What You Need',
-    body: 'Share your coverage goals, current plan, and budget in five minutes. No paperwork, no spam.',
+    body: 'Share your coverage goals, current plan, and budget through the short quote request. No paperwork, no spam.',
     note: 'We start with listening — not selling.',
     align: 'left',
   },
   {
     num: '02',
-    title: 'We Compare 30+ Plans',
-    body: 'Your advisor searches every top-rated carrier and surfaces your best options — ranked by price, coverage, and fit.',
+    title: 'Patrick Reviews Your Options',
+    body: 'Patrick looks at the coverage details that matter, then explains suitable options in plain language.',
     note: 'You see the comparison, not just the recommendation.',
     align: 'right',
   },
   {
     num: '03',
-    title: 'You Get Protected',
-    body: 'Choose the plan that fits. We handle enrollment and stay with you through every renewal.',
-    note: 'We stay with you — not just until enrollment.',
+    title: 'You Choose What Fits',
+    body: 'Choose the option that works for your situation. If you decide to move forward, Patrick helps with the next steps.',
+    note: 'You stay in control of the decision.',
     align: 'left',
   },
 ]
@@ -97,15 +97,13 @@ export default function HowItWorks() {
           data-reveal
         >
           <p className="text-navy-900/65 text-sm">
-            Most quotes ready within{' '}
-            <span className="text-navy-900/70 font-semibold">24 hours.</span>{' '}
-            No commitment required.
+            Start with a short request. Patrick will follow up personally.
           </p>
           <a
             href="#get-quote"
             className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm px-7 py-3.5 transition-colors duration-300 tracking-wide"
           >
-            Start With a Free Quote
+            Start With a Free Review
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

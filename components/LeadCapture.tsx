@@ -1,9 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { trackEvent } from '@/lib/analytics'
+import { selectableStates } from '@/lib/licensedStates'
+import { isValidState, isValidUSPhone, isValidZip, splitFullName } from '@/lib/leadValidation'
 
 const coverages = [
-  { id: 'medicare',  label: 'Medicare',           sub: 'Advantage · Supplement · Part D' },
+  { id: 'health',    label: 'Health Insurance',    sub: 'Individual · Group · Family' },
+  { id: 'medicare',  label: 'Medicare',            sub: 'Advantage · Supplement · Part D' },
   { id: 'life',      label: 'Life Insurance',      sub: 'Term · Whole · Final Expense' },
   { id: 'auto',      label: 'Auto Insurance',      sub: 'Personal & Commercial' },
   { id: 'home',      label: 'Home Insurance',      sub: 'Homeowners · Renters · Landlord' },
@@ -11,6 +15,10 @@ const coverages = [
 ]
 
 const followUp: Record<string, { q: string; opts: string[] }> = {
+  health: {
+    q: 'What best describes your situation?',
+    opts: ['Individual or family plan', 'Small group / employees', 'Losing current coverage', 'Comparing plan costs', 'Just exploring options'],
+  },
   medicare: {
     q: 'What best describes your situation?',
     opts: ['Turning 65 soon', 'Already on Medicare', 'Losing employer coverage', 'Reviewing my options', 'Helping a family member'],
@@ -41,6 +49,8 @@ const urgencyOptions = [
 ]
 
 type Step = 1 | 2 | 3 | 4 | 5
+const totalSteps = 4
+const bookingUrl = process.env.NEXT_PUBLIC_BOOKING_URL
 
 export default function LeadCapture() {
   const [step, setStep]             = useState<Step>(1)
@@ -49,26 +59,40 @@ export default function LeadCapture() {
   const [urgency, setUrgency]       = useState('')
   const [name, setName]             = useState('')
   const [phone, setPhone]           = useState('')
+  const [state, setUsState]         = useState('')
+  const [zip, setZip]               = useState('')
   const [email, setEmail]           = useState('')
   const [notes, setNotes]           = useState('')
+  const [website, setWebsite]       = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]           = useState('')
 
-  const progress      = step === 1 ? 25 : step === 2 ? 50 : step === 3 ? 75 : 100
+  const progress      = step >= 4 ? 100 : Math.round((step / totalSteps) * 100)
   const coverageLabel = coverages.find(c => c.id === coverage)?.label ?? coverage
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !phone.trim() || !email.trim()) {
-      setError('Name, phone, and email are required.')
+    if (!name.trim() || !phone.trim()) {
+      setError('Name and phone are required.')
+      return
+    }
+    if (!isValidUSPhone(phone)) {
+      setError('Please enter a valid phone number.')
+      return
+    }
+    if (!isValidState(state)) {
+      setError('Please select your state.')
+      return
+    }
+    if (!isValidZip(zip)) {
+      setError('Please enter a valid 5-digit ZIP code.')
       return
     }
     setSubmitting(true)
     setError('')
 
-    const nameParts = name.trim().split(' ')
-    const firstName = nameParts[0] || ''
-    const lastName  = nameParts.slice(1).join(' ') || ''
+    const { firstName, lastName } = splitFullName(name)
+    trackEvent('form_submission_attempted', { form: 'hero_quiz', coverage: coverageLabel })
 
     try {
       const res = await fetch('/api/submit-lead', {
@@ -79,11 +103,14 @@ export default function LeadCapture() {
           lastName,
           phone: phone.trim(),
           email: email.trim(),
+          state,
+          zip,
           coverageLabel,
           situation,
           urgency,
           notes: notes.trim(),
           source: 'Hero Quiz Funnel',
+          website,
         }),
       })
 
@@ -91,15 +118,18 @@ export default function LeadCapture() {
 
       if (!res.ok || !data.success) {
         setError(data.error || 'Something went wrong. Please try again or call us directly.')
+        trackEvent('form_submission_failed', { form: 'hero_quiz', status: res.status })
         setSubmitting(false)
         return
       }
     } catch {
       setError('Network error. Please try again or call (866) 786-1585.')
+      trackEvent('form_submission_failed', { form: 'hero_quiz', status: 'network' })
       setSubmitting(false)
       return
     }
 
+    trackEvent('form_submission_succeeded', { form: 'hero_quiz', coverage: coverageLabel, state })
     setStep(5)
     setSubmitting(false)
   }
@@ -116,108 +146,199 @@ export default function LeadCapture() {
 
         {step === 1 && (
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-1">Step 1 of 3</p>
-            <h2 className="font-serif text-white font-bold text-lg mb-5 italic">What coverage are you looking for?</h2>
+            <p className="text-xs font-semibold tracking-[0.14em] uppercase text-gold mb-1">Step 1 of {totalSteps}</p>
+            <p className="font-serif text-white font-bold text-lg mb-5 italic">What coverage are you looking for?</p>
             <div className="grid grid-cols-1 gap-2 mb-6">
               {coverages.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCoverage(c.id); setStep(2) }}
-                  className="flex items-center justify-between px-4 py-3 border border-white/8 text-left transition-all duration-200 group hover:border-gold/30 hover:bg-white/3"
+                  onClick={() => {
+                    setCoverage(c.id)
+                    trackEvent('quiz_started', { form: 'hero_quiz' })
+                    trackEvent('coverage_selected', { form: 'hero_quiz', coverage: c.label })
+                    trackEvent('quiz_step_completed', { form: 'hero_quiz', step: 1 })
+                    setStep(2)
+                  }}
+                  className="flex min-h-11 items-center justify-between px-4 py-3 border border-white/12 text-left transition-all duration-200 group hover:border-gold/40 hover:bg-white/3"
                 >
                   <div>
-                    <p className="text-white/80 font-semibold text-sm">{c.label}</p>
-                    <p className="text-white/50 text-[11px]">{c.sub}</p>
+                    <p className="text-white/90 font-semibold text-sm">{c.label}</p>
+                    <p className="text-white/65 text-xs">{c.sub}</p>
                   </div>
-                  <svg className="w-4 h-4 text-white/15 group-hover:text-gold transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-white/35 group-hover:text-gold transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
               ))}
             </div>
-            <p className="text-center text-white/50 text-[11px]">Free · No obligation · Takes 90 seconds</p>
+            <p className="text-center text-white/70 text-xs">Free. No obligation. No address fields.</p>
           </div>
         )}
 
         {step === 2 && coverage && (
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-1">Step 2 of 3</p>
-            <h2 className="font-serif text-white font-bold text-lg mb-1 italic">{followUp[coverage].q}</h2>
-            <p className="text-white/55 text-xs mb-5">Helps us prepare the most relevant options for you.</p>
+            <p className="text-xs font-semibold tracking-[0.14em] uppercase text-gold mb-1">Step 2 of {totalSteps}</p>
+            <p className="font-serif text-white font-bold text-lg mb-1 italic">{followUp[coverage].q}</p>
+            <p className="text-white/70 text-xs mb-5">Helps Patrick prepare relevant options for you.</p>
             <div className="grid grid-cols-1 gap-2 mb-6">
               {followUp[coverage].opts.map((opt) => (
                 <button
                   key={opt}
-                  onClick={() => { setSituation(opt); setStep(3) }}
-                  className="px-4 py-3 border border-white/8 text-sm font-medium text-left text-white/60 transition-all duration-200 hover:border-gold/30 hover:text-white/80"
+                  onClick={() => {
+                    setSituation(opt)
+                    trackEvent('quiz_step_completed', { form: 'hero_quiz', step: 2, coverage: coverageLabel })
+                    setStep(3)
+                  }}
+                  className="min-h-11 px-4 py-3 border border-white/12 text-sm font-medium text-left text-white/80 transition-all duration-200 hover:border-gold/40 hover:text-white"
                 >
                   {opt}
                 </button>
               ))}
             </div>
-            <button onClick={() => { setCoverage(''); setSituation(''); setStep(1) }} className="text-white/20 hover:text-white/50 text-xs transition-colors">← Back</button>
+            <button onClick={() => { setCoverage(''); setSituation(''); setStep(1) }} className="min-h-11 text-white/70 hover:text-white text-xs transition-colors">Back</button>
           </div>
         )}
 
         {step === 3 && (
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-1">Step 3 of 3</p>
-            <h2 className="font-serif text-white font-bold text-lg mb-1 italic">How soon are you looking to decide?</h2>
-            <p className="text-white/55 text-xs mb-5">We&rsquo;ll prioritize your review accordingly.</p>
+            <p className="text-xs font-semibold tracking-[0.14em] uppercase text-gold mb-1">Step 3 of {totalSteps}</p>
+            <p className="font-serif text-white font-bold text-lg mb-1 italic">How soon are you looking to decide?</p>
+            <p className="text-white/70 text-xs mb-5">Patrick will use this to understand timing.</p>
             <div className="grid grid-cols-1 gap-2 mb-6">
               {urgencyOptions.map((opt) => (
                 <button
                   key={opt.label}
-                  onClick={() => { setUrgency(opt.label); setStep(4) }}
-                  className="flex items-center justify-between px-4 py-3 border border-white/8 text-left transition-all duration-200 hover:border-gold/30 hover:bg-white/3"
+                  onClick={() => {
+                    setUrgency(opt.label)
+                    trackEvent('quiz_step_completed', { form: 'hero_quiz', step: 3, coverage: coverageLabel })
+                    setStep(4)
+                  }}
+                  className="flex min-h-11 items-center justify-between px-4 py-3 border border-white/12 text-left transition-all duration-200 hover:border-gold/40 hover:bg-white/3"
                 >
                   <div>
-                    <p className="text-white/80 font-semibold text-sm">{opt.label}</p>
-                    <p className="text-white/50 text-[11px]">{opt.sub}</p>
+                    <p className="text-white/90 font-semibold text-sm">{opt.label}</p>
+                    <p className="text-white/65 text-xs">{opt.sub}</p>
                   </div>
                 </button>
               ))}
             </div>
-            <button onClick={() => { setSituation(''); setStep(2) }} className="text-white/20 hover:text-white/50 text-xs transition-colors">← Back</button>
+            <button onClick={() => { setSituation(''); setStep(2) }} className="min-h-11 text-white/70 hover:text-white text-xs transition-colors">Back</button>
           </div>
         )}
 
         {step === 4 && (
           <form onSubmit={handleSubmit}>
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-1">Almost Done</p>
-            <h2 className="font-serif text-white font-bold text-lg mb-1 italic">Where should we send your options?</h2>
-            <p className="text-white/55 text-xs mb-5">An advisor will reach out within 24 hours.</p>
-            <div className="space-y-3 mb-5">
+            <p className="text-xs font-semibold tracking-[0.14em] uppercase text-gold mb-1">Step 4 of {totalSteps}</p>
+            <p className="font-serif text-white font-bold text-lg mb-1 italic">How should Patrick reach you?</p>
+            <p className="text-white/75 text-xs leading-relaxed mb-5">
+              Your information stays with Patrick Wilson Financial. It is not sold or distributed to multiple agents.
+            </p>
+            <div className="sr-only" aria-hidden="true">
+              <label htmlFor="hero-website">Website</label>
               <input
+                id="hero-website"
+                name="website"
                 type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+            <div className="space-y-3 mb-5">
+              <label htmlFor="hero-name" className="sr-only">Full name</label>
+              <input
+                id="hero-name"
+                name="name"
+                type="text"
+                autoComplete="name"
                 placeholder="Full name *"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                minLength={2}
+                maxLength={120}
+                className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
               />
+              <label htmlFor="hero-phone" className="sr-only">Phone number</label>
               <input
+                id="hero-phone"
+                name="phone"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 placeholder="Phone number *"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
-                className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                minLength={10}
+                maxLength={20}
+                pattern="^[0-9+\(\)\.\-\s]{10,20}$"
+                className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
               />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="hero-state" className="sr-only">State</label>
+                  <select
+                    id="hero-state"
+                    name="state"
+                    autoComplete="address-level1"
+                    value={state}
+                    onChange={(e) => setUsState(e.target.value)}
+                    required
+                    aria-label="State"
+                    className="select-chevron w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                    style={{ color: state ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.55)' }}
+                  >
+                    <option value="" disabled>State *</option>
+                    {selectableStates().map(({ code, name }) => (
+                      <option key={code} value={code} style={{ color: '#F4F1EA', backgroundColor: '#0C1829' }}>
+                        {name} ({code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="hero-zip" className="sr-only">ZIP code</label>
+                  <input
+                    id="hero-zip"
+                    name="zip"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    placeholder="ZIP code *"
+                    value={zip}
+                    onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    required
+                    pattern="^\d{5}$"
+                    maxLength={5}
+                    className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                  />
+                </div>
+              </div>
+              <label htmlFor="hero-email" className="sr-only">Email address</label>
               <input
+                id="hero-email"
+                name="email"
                 type="email"
-                placeholder="Email address *"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="Email address (optional)"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                maxLength={254}
+                className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
               />
+              <label htmlFor="hero-notes" className="sr-only">Additional notes</label>
               <textarea
+                id="hero-notes"
+                name="notes"
                 placeholder="Anything you'd like us to know? (optional)"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors resize-none rounded-none"
+                maxLength={1000}
+                className="w-full appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors resize-none rounded-none"
               />
             </div>
             {error && (
@@ -250,13 +371,13 @@ export default function LeadCapture() {
                 </>
               )}
             </button>
-            <p className="text-center text-white/55 text-[10px] mt-3">No spam. No obligation. We never sell your information.</p>
+            <p className="text-center text-white/75 text-xs mt-3">Patrick will review your request and contact you directly.</p>
             <button
               type="button"
               onClick={() => { setUrgency(''); setStep(3) }}
-              className="block mx-auto mt-3 text-white/20 hover:text-white/50 text-xs transition-colors"
+              className="block mx-auto mt-3 min-h-11 text-white/70 hover:text-white text-xs transition-colors"
             >
-              ← Back
+              Back
             </button>
           </form>
         )}
@@ -270,18 +391,30 @@ export default function LeadCapture() {
             </div>
             <h2 className="font-serif text-white font-bold text-lg mb-2 italic">You&rsquo;re all set.</h2>
             <p className="text-white/65 text-sm leading-relaxed mb-6">
-              Your free coverage review is being prepared. An advisor will reach out within{' '}
-              <strong className="text-white/70">24 hours</strong> — usually much sooner.
+              Patrick Wilson Financial has received your request. Patrick will review
+              your coverage details and contact you directly to talk through your options.
             </p>
-            <a
-              href="tel:+18667861585"
-              className="inline-flex items-center gap-2 text-gold font-semibold text-sm hover:text-gold-dark transition-colors"
-            >
+            <div className="flex flex-col gap-3 items-center">
+              {bookingUrl && (
+                <a
+                  href={bookingUrl}
+                  onClick={() => trackEvent('booking_cta_clicked', { location: 'hero_thank_you' })}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm px-5 py-3 transition-colors"
+                >
+                  Pick a Time
+                </a>
+              )}
+              <a
+                href="tel:+18667861585"
+                onClick={() => trackEvent('phone_cta_clicked', { location: 'hero_thank_you' })}
+                className="inline-flex min-h-11 items-center gap-2 text-gold font-semibold text-sm hover:text-gold-dark transition-colors"
+              >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
               Call now: (866) 786-1585
-            </a>
+              </a>
+            </div>
           </div>
         )}
 

@@ -17,11 +17,44 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* iOS rubber-band overscroll exposes the html background above the bone
+     hero. Match the hero so the bounce never flashes navy. */
+  background-color: #F4F1EA;
 }
 
 body {
   background-color: #070F1C;
   color: #F4F1EA;
+  /* Belt-and-braces against a stray wide child forcing a sideways scroll on
+     narrow phones. The page has no intentional horizontal scroll. */
+  overflow-x: hidden;
+}
+
+/* ── FIXED-HEADER ANCHOR OFFSET ──
+   The header is 72px and fixed. Without a scroll margin every `#section`
+   jump parks the heading underneath it. `env()` covers landscape notches. */
+:where(section[id], [id^='get-'], main[id]) {
+  scroll-margin-top: calc(88px + env(safe-area-inset-top));
+}
+
+/* ── SKIP LINK ──
+   Visually hidden until focused, then pinned below the notch. */
+.skip-link {
+  position: fixed;
+  top: calc(0.5rem + env(safe-area-inset-top));
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: #070F1C;
+  color: #F4F1EA;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid #B8882A;
+  transform: translateY(calc(-100% - 1.5rem));
+  transition: transform 0.2s ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 /* ── SCROLL REVEAL ── */
@@ -80,6 +113,13 @@ body {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+@media (hover: none), (pointer: coarse) {
+  .service-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* ── GOLD CTA — concrete hex for Lighthouse contrast detection ── */
 .btn-gold-cta {
   background-color: #B8882A;
@@ -121,10 +161,47 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(184,136,42,0.5); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #B8882A; }
 
-/* ── iOS SAFARI: prevent auto-zoom on input focus (requires font-size >= 16px) ── */
-@media (max-width: 768px) {
+/* ── iOS SAFARI: prevent auto-zoom on input focus ──
+   Safari zooms the page whenever a focused control renders below 16px. The
+   breakpoint matches MobileCTA's `md:hidden` exactly (below 768px) so there is
+   no 1px band where the rules disagree. */
+@media (max-width: 767.98px) {
+  /* Clear the sticky bottom CTA plus the home indicator, so the footer and the
+     final form button are never trapped underneath it. */
+  body {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
   input, textarea, select {
     font-size: 16px;
+  }
+}
+
+/* iOS renders `appearance: none` selects with no affordance at all. Draw the
+   chevron back on, keeping text clear of it. */
+select.select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23B8882A' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.1rem 1.1rem;
+  padding-right: 2.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
   }
 }
 

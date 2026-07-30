@@ -1,19 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import { licensedStatesSentence } from '@/lib/licensedStates'
 
 const faqs = [
   {
     q: 'Do I pay more by using a broker?',
-    a: 'No. Our service is completely free to you. We are compensated by the insurance carrier when you enroll — the price you pay is identical whether you go direct or through us. In most cases, we find you a lower price than going direct.',
+    a: 'There is no obligation to request a review. In many cases, independent advisors are compensated by the insurance carrier if you enroll. Patrick will explain how compensation works before you make a decision.',
   },
   {
     q: 'How long does it take to get a quote?',
-    a: 'Most quotes are ready within 24 hours or less. For Medicare and life insurance, we often have options for you same-day. We move at your pace — no pressure.',
+    a: 'After you submit the form, Patrick will follow up to understand your needs and gather any details required for an accurate quote. The timeline depends on the type of coverage and your situation.',
   },
   {
     q: 'Can you compare Medicare plans for me?',
-    a: 'Yes — Medicare is one of our specialties. We compare Medicare Advantage, Medicare Supplement (Medigap), and Part D drug plans across all major carriers in your area and walk you through exactly what each one covers.',
+    a: 'Yes. Patrick can help you compare Medicare Advantage, Medicare Supplement (Medigap), and Part D drug plan options and walk through what each option covers.',
   },
   {
     q: "What's the difference between Medicare Advantage and Medicare Supplement?",
@@ -21,11 +22,11 @@ const faqs = [
   },
   {
     q: 'What states do you serve?',
-    a: 'We are licensed in South Carolina and North Carolina. If you are in another state, contact us — we will either confirm coverage or connect you with a trusted local resource.',
+    a: `Patrick is licensed in ${licensedStatesSentence()}. The office is at 1200 The Plaza, Charlotte, NC 28205 — it is the only physical location, and clients in the other licensed states are served by phone and email.`,
   },
   {
     q: 'Is there any obligation to buy after getting a quote?',
-    a: 'None whatsoever. We provide quotes with zero pressure and zero obligation. Our goal is to give you the best information possible so you can make the right decision — whether that means enrolling with us or not.',
+    a: 'No. The goal is to give you clear information so you can make the right decision, whether that means enrolling or not.',
   },
 ]
 
@@ -53,7 +54,7 @@ export default function FAQ() {
               <span className="text-navy-900/55 italic">Answers.</span>
             </h2>
             <p className="text-navy-900/65 text-sm leading-relaxed mb-8">
-              Still have questions? Call us directly — a real advisor answers.
+            Still have questions? Call Patrick directly.
             </p>
             <a
               href="tel:+18667861585"
@@ -83,9 +84,11 @@ export default function FAQ() {
             {faqs.map((faq, i) => (
               <div key={i} className="py-6">
                 <button
-                  className="w-full flex items-start justify-between gap-6 text-left group"
+                  id={`faq-trigger-${i}`}
+                  className="w-full min-h-11 flex items-start justify-between gap-6 text-left group"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
+                  aria-controls={`faq-panel-${i}`}
                 >
                   <span className="text-navy-900/70 font-semibold text-base group-hover:text-navy-950 transition-colors duration-200">
                     {faq.q}
@@ -111,8 +114,11 @@ export default function FAQ() {
                   </span>
                 </button>
                 <div
+                  id={`faq-panel-${i}`}
+                  role="region"
+                  aria-labelledby={`faq-trigger-${i}`}
                   className={`overflow-hidden transition-all duration-300 ${
-                    openIndex === i ? 'max-h-96 mt-4' : 'max-h-0'
+                    openIndex === i ? 'max-h-[32rem] mt-4' : 'max-h-0'
                   }`}
                 >
                   <p className="text-navy-900/70 text-sm leading-relaxed">{faq.a}</p>

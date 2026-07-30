@@ -1,24 +1,44 @@
 'use client'
 
 import { useState } from 'react'
+import { useEffect } from 'react'
+import { trackEvent } from '@/lib/analytics'
+import { selectableStates } from '@/lib/licensedStates'
+import { isValidState, isValidUSPhone, isValidZip, splitFullName } from '@/lib/leadValidation'
 
 const coverageOptions = [
+  'Health Insurance',
   'Medicare (Advantage / Supplement / Part D)',
   'Life Insurance',
   'Business Insurance',
   'Auto Insurance',
   'Home / Renters Insurance',
-  'Multiple — not sure yet',
+  'Multiple, not sure yet',
 ]
+
+const bookingUrl = process.env.NEXT_PUBLIC_BOOKING_URL
 
 export default function FinalCTA() {
   const [name, setName]               = useState('')
   const [phone, setPhone]             = useState('')
+  const [state, setUsState]           = useState('')
+  const [zip, setZip]                 = useState('')
   const [coverage, setCoverage]       = useState('')
   const [message, setMessage]         = useState('')
+  const [website, setWebsite]         = useState('')
   const [submitting, setSubmitting]   = useState(false)
   const [submitted, setSubmitted]     = useState(false)
   const [error, setError]             = useState('')
+
+  useEffect(() => {
+    const applyCoverage = (event: Event) => {
+      const selected = (event as CustomEvent<{ coverage: string }>).detail?.coverage
+      if (selected) setCoverage(selected)
+    }
+
+    window.addEventListener('patrick:coverage-selected', applyCoverage)
+    return () => window.removeEventListener('patrick:coverage-selected', applyCoverage)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -26,12 +46,23 @@ export default function FinalCTA() {
       setError('Name and phone are required.')
       return
     }
+    if (!isValidUSPhone(phone)) {
+      setError('Please enter a valid phone number.')
+      return
+    }
+    if (!isValidState(state)) {
+      setError('Please select your state.')
+      return
+    }
+    if (!isValidZip(zip)) {
+      setError('Please enter a valid 5-digit ZIP code.')
+      return
+    }
     setSubmitting(true)
     setError('')
 
-    const nameParts = name.trim().split(' ')
-    const firstName = nameParts[0] || ''
-    const lastName  = nameParts.slice(1).join(' ') || ''
+    const { firstName, lastName } = splitFullName(name)
+    trackEvent('form_submission_attempted', { form: 'bottom_form', coverage: coverage || 'Not specified' })
 
     try {
       const res = await fetch('/api/submit-lead', {
@@ -42,11 +73,14 @@ export default function FinalCTA() {
           lastName,
           phone: phone.trim(),
           email: '',
+          state,
+          zip,
           coverageLabel: coverage || 'Not specified',
           situation: '',
           urgency: '',
           notes: message.trim(),
           source: 'Free Quote Form',
+          website,
         }),
       })
 
@@ -54,15 +88,18 @@ export default function FinalCTA() {
 
       if (!res.ok || !data.success) {
         setError(data.error || 'Something went wrong. Please try again or call us directly.')
+        trackEvent('form_submission_failed', { form: 'bottom_form', status: res.status })
         setSubmitting(false)
         return
       }
     } catch {
       setError('Network error. Please try again or call (866) 786-1585.')
+      trackEvent('form_submission_failed', { form: 'bottom_form', status: 'network' })
       setSubmitting(false)
       return
     }
 
+    trackEvent('form_submission_succeeded', { form: 'bottom_form', coverage: coverage || 'Not specified', state })
     setSubmitted(true)
     setSubmitting(false)
   }
@@ -97,15 +134,15 @@ export default function FinalCTA() {
               Better Coverage?
             </h2>
             <p className="text-white/45 text-base leading-relaxed max-w-md mb-10">
-              Join hundreds of families and businesses protected by JP Wilson Financial.
-              No obligation. No pressure. Just better coverage.
+              Share what you need and Patrick will follow up with a clear,
+              pressure-free review of suitable insurance options.
             </p>
 
             <div className="space-y-4">
               {[
-                ['Independent broker', 'We shop every carrier — not just one.'],
-                ['No cost to you', 'Advisors are paid by the carrier you choose.'],
-                ['Response within 24 hours', 'Usually same business day.'],
+                ['Independent advisor', 'Patrick is not tied to one carrier.'],
+                ['Short request form', 'Only key contact and coverage details.'],
+                ['In-person or remote', 'Charlotte office, or handled by phone and email.'],
               ].map(([title, body]) => (
                 <div key={title} className="flex items-start gap-3">
                   <svg className="w-4 h-4 text-gold mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -144,17 +181,30 @@ export default function FinalCTA() {
                 </div>
                 <h2 className="font-serif text-white font-bold text-lg mb-2 italic">Request Received.</h2>
                 <p className="text-white/65 text-sm leading-relaxed mb-6">
-                  An advisor will reach out within <strong className="text-white/70">24 hours</strong> — usually same day.
+                  Patrick Wilson Financial has received your request. Patrick will
+                  review your coverage details and contact you directly to talk through your options.
                 </p>
-                <a
-                  href="tel:+18667861585"
-                  className="inline-flex items-center gap-2 text-gold font-semibold text-sm hover:text-gold-dark transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  Call now if urgent: (866) 786-1585
-                </a>
+                <div className="flex flex-col gap-3 items-center">
+                  {bookingUrl && (
+                    <a
+                      href={bookingUrl}
+                      onClick={() => trackEvent('booking_cta_clicked', { location: 'bottom_thank_you' })}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm px-5 py-3 transition-colors"
+                    >
+                      Pick a Time
+                    </a>
+                  )}
+                  <a
+                    href="tel:+18667861585"
+                    onClick={() => trackEvent('phone_cta_clicked', { location: 'bottom_thank_you' })}
+                    className="inline-flex min-h-11 items-center gap-2 text-gold font-semibold text-sm hover:text-gold-dark transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Call now if urgent: (866) 786-1585
+                  </a>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-7 md:p-8">
@@ -162,44 +212,123 @@ export default function FinalCTA() {
                   Request Your Free Review
                 </h2>
                 <p className="text-white/55 text-[11px] mb-6 tracking-wide">
-                  No obligation. An advisor responds within 24 hours.
+                  No obligation. Patrick will follow up personally.
+                </p>
+                <p className="text-white/75 text-xs leading-relaxed mb-5">
+                  Your information stays with Patrick Wilson Financial. It is not sold or distributed to multiple agents.
                 </p>
 
-                <div className="space-y-3 mb-5">
+                <div className="sr-only" aria-hidden="true">
+                  <label htmlFor="bottom-website">Website</label>
                   <input
+                    id="bottom-website"
+                    name="website"
                     type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-3 mb-5">
+                  <label htmlFor="bottom-name" className="sr-only">Full name</label>
+                  <input
+                    id="bottom-name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
                     placeholder="Full name *"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                    minLength={2}
+                    maxLength={120}
+                    className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
                   />
+                  <label htmlFor="bottom-phone" className="sr-only">Phone number</label>
                   <input
+                    id="bottom-phone"
+                    name="phone"
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     placeholder="Phone number *"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
-                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                    minLength={10}
+                    maxLength={20}
+                    pattern="^[0-9+\(\)\.\-\s]{10,20}$"
+                    className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
                   />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="bottom-state" className="sr-only">State</label>
+                      <select
+                        id="bottom-state"
+                        name="state"
+                        autoComplete="address-level1"
+                        value={state}
+                        onChange={(e) => setUsState(e.target.value)}
+                        required
+                        aria-label="State"
+                        className="select-chevron w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                        style={{ color: state ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.55)' }}
+                      >
+                        <option value="" disabled>State *</option>
+                        {selectableStates().map(({ code, name }) => (
+                          <option key={code} value={code} style={{ color: '#F4F1EA', backgroundColor: '#0C1829' }}>
+                            {name} ({code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="bottom-zip" className="sr-only">ZIP code</label>
+                      <input
+                        id="bottom-zip"
+                        name="zip"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        placeholder="ZIP code *"
+                        value={zip}
+                        onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                        required
+                        pattern="^\d{5}$"
+                        maxLength={5}
+                        className="w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                      />
+                    </div>
+                  </div>
+                  <label htmlFor="bottom-coverage" className="sr-only">Coverage type</label>
                   <select
+                    id="bottom-coverage"
+                    name="coverage"
                     value={coverage}
-                    onChange={(e) => setCoverage(e.target.value)}
+                    onChange={(e) => {
+                      setCoverage(e.target.value)
+                      trackEvent('coverage_selected', { form: 'bottom_form', coverage: e.target.value })
+                    }}
                     aria-label="Coverage type"
-                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-gold/50 transition-colors rounded-none"
-                    style={{ color: coverage ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)' }}
+                    className="select-chevron w-full min-h-11 appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm focus:outline-none focus:border-gold/50 transition-colors rounded-none"
+                    style={{ color: coverage ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.55)' }}
                   >
                     <option value="" disabled>Coverage type (optional)</option>
                     {coverageOptions.map((o) => (
                       <option key={o} value={o} style={{ color: '#F4F1EA', backgroundColor: '#0C1829' }}>{o}</option>
                     ))}
                   </select>
+                  <label htmlFor="bottom-message" className="sr-only">Additional notes</label>
                   <textarea
+                    id="bottom-message"
+                    name="message"
                     placeholder="Anything else we should know? (optional)"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
-                    className="w-full appearance-none bg-navy-950 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors resize-none rounded-none"
+                    maxLength={1000}
+                    className="w-full appearance-none bg-navy-950 border border-white/12 px-4 py-3 text-base md:text-sm text-white placeholder-white/55 focus:outline-none focus:border-gold/50 transition-colors resize-none rounded-none"
                   />
                 </div>
 

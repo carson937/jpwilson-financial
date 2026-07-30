@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { trackEvent } from '@/lib/analytics'
 
 export default function MobileCTA() {
   const [visible, setVisible] = useState(false)
@@ -13,19 +14,31 @@ export default function MobileCTA() {
 
   return (
     <div
+      aria-hidden={!visible}
       className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${
-        visible ? 'translate-y-0' : 'translate-y-full'
+        visible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       }`}
     >
-      <div className="bg-navy-900 border-t border-white/10 px-4 py-3 flex gap-3">
+      {/* Reserve the home-indicator inset so the buttons are never half-covered
+          on notched iPhones. Requires viewportFit: 'cover' (see app/layout). */}
+      <div
+        className="bg-navy-900 border-t border-white/10 px-4 py-3 flex gap-3"
+        style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+      >
+        {/* While the bar is off-screen the wrapper is aria-hidden, so these
+            links must also leave the tab order — otherwise keyboard users can
+            focus a control that screen readers cannot see (WCAG 4.1.2). */}
         <a
           href="#get-quote"
+          tabIndex={visible ? 0 : -1}
           className="flex-1 bg-gold hover:bg-gold-dark text-navy-950 text-sm font-semibold py-3.5 text-center transition-colors"
         >
           Get Free Quote
         </a>
         <a
           href="tel:+18667861585"
+          tabIndex={visible ? 0 : -1}
+          onClick={() => trackEvent('phone_cta_clicked', { location: 'mobile_sticky' })}
           className="flex-1 border border-white/20 hover:border-gold text-white text-sm font-semibold py-3.5 text-center flex items-center justify-center gap-1.5 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

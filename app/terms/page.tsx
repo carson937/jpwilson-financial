@@ -1,10 +1,19 @@
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
+
 export const metadata = {
-  title: 'Terms of Service — JP Wilson Financial Group',
+  title: 'Terms of Service | Patrick Wilson Financial',
+  // Without this the root layout's `alternates.canonical: '/'` is
+  // inherited, telling search engines this page is a duplicate of the
+  // homepage.
+  alternates: { canonical: '/terms' },
 }
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-white pt-32 pb-24">
+    <>
+      <Nav />
+      <main id="main" className="min-h-[100svh] bg-white pt-32 pb-24">
       <div className="max-w-3xl mx-auto px-6 lg:px-8">
         <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gold mb-4">
           Legal
@@ -14,13 +23,13 @@ export default function TermsPage() {
         </h1>
 
         <div className="prose prose-sm max-w-none text-navy-800/70 space-y-8 leading-relaxed">
-          <p className="text-sm">Last updated: {new Date().getFullYear()}</p>
+          <p className="text-sm">Last updated: July 21, 2026</p>
 
           <section>
             <h2 className="text-navy-950 font-bold text-lg mb-3">Use of This Website</h2>
             <p>
-              This website is operated by JP Wilson Financial Group, a licensed insurance
-              brokerage. By using this site, you agree to these terms. The information on
+              This website is operated by Patrick Wilson Financial. By using
+              this site, you agree to these terms. The information on
               this site is for general informational purposes and does not constitute
               insurance advice.
             </p>
@@ -40,16 +49,16 @@ export default function TermsPage() {
             <p>
               We strive to provide accurate and up-to-date information, but insurance
               products, rates, and availability change frequently. All coverage details
-              and pricing must be confirmed with a licensed advisor before enrollment.
+              and pricing must be confirmed before enrollment.
             </p>
           </section>
 
           <section>
-            <h2 className="text-navy-950 font-bold text-lg mb-3">Licensing</h2>
+            <h2 className="text-navy-950 font-bold text-lg mb-3">Service Area</h2>
             <p>
-              JP Wilson Financial Group is licensed to sell insurance in South Carolina
-              and North Carolina. We operate as an independent insurance broker and are
-              not exclusively affiliated with any single carrier.
+              Patrick Wilson Financial operates from 1200 The Plaza, Charlotte, NC 28205.
+              Patrick operates as an independent insurance advisor and is not
+              exclusively affiliated with any single carrier.
             </p>
           </section>
 
@@ -79,6 +88,8 @@ export default function TermsPage() {
           </a>
         </div>
       </div>
-    </main>
+      </main>
+      <Footer />
+    </>
   )
 }
