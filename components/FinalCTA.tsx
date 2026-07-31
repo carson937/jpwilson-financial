@@ -181,7 +181,7 @@ export default function FinalCTA() {
                 </div>
                 <h2 className="font-serif text-white font-bold text-lg mb-2 italic">Request Received.</h2>
                 <p className="text-white/65 text-sm leading-relaxed mb-6">
-                  Patrick Wilson Financial has received your request. Patrick will
+                  JP Wilson Financial Group has received your request. Patrick will
                   review your coverage details and contact you directly to talk through your options.
                 </p>
                 <div className="flex flex-col gap-3 items-center">
@@ -215,7 +215,7 @@ export default function FinalCTA() {
                   No obligation. Patrick will follow up personally.
                 </p>
                 <p className="text-white/75 text-xs leading-relaxed mb-5">
-                  Your information stays with Patrick Wilson Financial. It is not sold or distributed to multiple agents.
+                  Your information stays with JP Wilson Financial Group. It is not sold or distributed to multiple agents.
                 </p>
 
                 <div className="sr-only" aria-hidden="true">

@@ -1,16 +1,15 @@
 import { BrandCrest } from './BrandLogo'
 import { OFFICE, licensedStatesSentence } from '@/lib/licensedStates'
 
-// Health and Medicare are listed adjacently at equal weight by client direction.
 const serviceLinks = [
+  { label: 'Life Insurance', href: '#services' },
+  { label: 'Business Insurance', href: '#services' },
+  { label: 'Commercial Auto Insurance', href: '#services' },
+  { label: 'Home & Auto Insurance', href: '#services' },
   { label: 'Health Insurance', href: '#services' },
   { label: 'Medicare Insurance', href: '#services' },
-  { label: 'Life Insurance', href: '#services' },
-  { label: 'Business & Commercial Insurance', href: '#services' },
   { label: 'General Liability', href: '#services' },
   { label: 'Workers’ Compensation', href: '#services' },
-  { label: 'Auto Insurance', href: '#services' },
-  { label: 'Homeowners & Renters Insurance', href: '#services' },
 ]
 
 const companyLinks = [
@@ -37,8 +36,8 @@ export default function Footer() {
             */}
             <div className="mb-5">
               <BrandCrest size={64} className="mb-4" />
-              <p className="font-serif text-sm font-bold text-white/80 leading-tight">Patrick Wilson</p>
-              <p className="text-[10px] text-gold tracking-[0.15em] uppercase mt-0.5">Financial</p>
+              <p className="font-serif text-sm font-bold text-white/80 leading-tight">JP Wilson</p>
+              <p className="text-[10px] text-gold tracking-[0.15em] uppercase mt-0.5">Financial Group</p>
             </div>
             <p className="text-sm leading-relaxed mb-6 max-w-[220px]">
               Independent insurance guidance for individuals, families, and
@@ -146,7 +145,7 @@ export default function Footer() {
         {/* Legal bar */}
         <div className="border-t border-white/6 pt-8 flex flex-col md:flex-row justify-between gap-4 text-[11px] text-white/45">
           <p>
-            &copy; {new Date().getFullYear()} Patrick Wilson Financial. All rights reserved.
+            &copy; {new Date().getFullYear()} JP Wilson Financial Group. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a href="/privacy" className="inline-block py-1 hover:text-white/35 transition-colors duration-200">

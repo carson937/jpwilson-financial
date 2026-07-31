@@ -57,7 +57,7 @@ export default function BrandLockup({
   height,
   surface = 'light',
   className = '',
-  alt = 'J.P. Wilson Financial Group',
+  alt = 'JP Wilson Financial Group',
 }: BrandLockupProps) {
   const width = Math.round((height * LOCKUP_W) / LOCKUP_H)
 

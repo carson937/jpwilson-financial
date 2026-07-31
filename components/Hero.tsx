@@ -61,9 +61,9 @@ export default function Hero() {
           </h1>
 
           <p className="text-[15px] text-navy-900/70 leading-relaxed max-w-md mb-10">
-            Patrick Wilson helps individuals, families, and businesses compare
-            suitable health and Medicare coverage, along with life, business,
-            and personal insurance options, without unnecessary pressure.
+            JP Wilson Financial Group helps individuals, families, and businesses
+            compare life, business, commercial auto, and home &amp; auto insurance
+            options without unnecessary pressure.
           </p>
 
           {/* Phone */}

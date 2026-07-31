@@ -2,59 +2,53 @@
 
 import { trackEvent } from '@/lib/analytics'
 
-/**
- * Health Insurance and Medicare Insurance carry equal hierarchy by client
- * direction (CLIENT_CONTEXT.md, 2026-07-29). They render as one paired row so
- * neither sits above the other. Do not add a badge, reorder, or split them into
- * separate rows without a written client decision.
- */
 const primaryPair = [
   {
-    name: 'Health Insurance',
-    desc: 'Individual and group health plans reviewed around your household or team, comparing networks, deductibles, and total yearly cost.',
-    tags: ['Individual Plans', 'Group Plans', 'Family Coverage'],
-    cta: 'Compare Health Plans',
+    name: 'Life Insurance',
+    desc: "Term, whole, final expense, and other life insurance options considered around your family's financial needs, not a one-size-fits-all policy.",
+    tags: ['Term Life', 'Whole Life', 'Universal', 'Final Expense'],
+    cta: 'Get a Life Quote',
   },
   {
-    name: 'Medicare Insurance',
-    desc: 'Medicare Advantage, Supplement, and Part D options compared against your doctors, prescriptions, and budget.',
-    tags: ['Medicare Advantage', 'Supplement (Medigap)', 'Part D', 'DSNP'],
-    cta: 'Compare Medicare Plans',
+    name: 'Business Insurance',
+    desc: 'General Liability, Workers’ Compensation, commercial property, and related policies reviewed around your business, industry, and risk exposure.',
+    tags: ['General Liability', 'Workers’ Compensation', 'Commercial Property', 'BOP'],
+    cta: 'Protect Your Business',
   },
 ]
 
 const services = [
   {
     num: '02',
-    name: 'Life Insurance',
-    desc: "Term, whole, final expense, and other life insurance options considered around your family's financial needs, not a one-size-fits-all policy.",
-    tags: ['Term Life', 'Whole Life', 'Universal', 'Final Expense'],
+    name: 'Commercial Auto Insurance',
+    desc: 'Commercial auto options compared with attention to liability limits, deductibles, drivers, vehicles, and total cost for your business.',
+    tags: ['Commercial Vehicles', 'Liability', 'Fleet Coverage', 'Drivers'],
     badge: null,
-    cta: 'Get a Life Quote',
+    cta: 'Get Commercial Auto Quote',
   },
   {
     num: '03',
-    name: 'Business & Commercial Insurance',
-    desc: 'General Liability, Workers’ Compensation, commercial property, and related policies reviewed around your business, industry, and risk exposure.',
-    tags: ['General Liability', 'Workers’ Compensation', 'Commercial Property', 'BOP'],
+    name: 'Home & Auto Insurance',
+    desc: 'Homeowners, renters, and personal auto policies reviewed with bundling options when they make sense for your household.',
+    tags: ['Homeowners', 'Renters', 'Personal Auto', 'Umbrella'],
     badge: null,
-    cta: 'Protect Your Business',
+    cta: 'Protect Home & Auto',
   },
   {
     num: '04',
-    name: 'Auto Insurance',
-    desc: 'Personal and commercial auto options compared with attention to liability limits, deductibles, drivers, vehicles, and total cost.',
-    tags: ['Personal Auto', 'Commercial Vehicles', 'SR-22'],
+    name: 'Health Insurance',
+    desc: 'Individual and group health plans reviewed around your household or team, comparing networks, deductibles, and total yearly cost.',
+    tags: ['Individual Plans', 'Group Plans', 'Family Coverage'],
     badge: null,
-    cta: 'Get Auto Quote',
+    cta: 'Compare Health Plans',
   },
   {
     num: '05',
-    name: 'Homeowners & Renters Insurance',
-    desc: 'Homeowners, renters, and landlord policies reviewed with bundling options when they make sense for your household.',
-    tags: ['Homeowners', 'Renters', 'Landlord', 'Umbrella'],
+    name: 'Medicare Insurance',
+    desc: 'Medicare Advantage, Supplement, and Part D options compared against your doctors, prescriptions, and budget.',
+    tags: ['Medicare Advantage', 'Supplement (Medigap)', 'Part D', 'DSNP'],
     badge: null,
-    cta: 'Protect Your Home',
+    cta: 'Compare Medicare Plans',
   },
 ]
 
@@ -87,16 +81,16 @@ export default function Services() {
             </h2>
           </div>
           <p className="text-navy-900/70 text-sm leading-relaxed pb-1">
-            From health and Medicare coverage to your business policy, Patrick
-            helps you compare suitable options clearly so you can choose coverage
-            with confidence, without the runaround.
+            Start with life, business, commercial auto, and home &amp; auto coverage.
+            Patrick can also help you compare health and Medicare options clearly,
+            without the runaround.
           </p>
         </div>
 
         {/* Services — editorial list, full-bleed rows */}
         <div>
 
-          {/* Row 01 — Health & Medicare share one row at equal weight */}
+          {/* Row 01 — the client-designated primary insurance categories */}
           <div
             className="block -mx-8 md:-mx-14 px-8 md:px-14 py-10 md:py-12 border-b border-navy-900/8"
             data-reveal

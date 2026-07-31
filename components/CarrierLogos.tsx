@@ -1,9 +1,9 @@
 const carriers = [
-  'Medicare Advantage', 'Medicare Supplement', 'Part D', 'Life Insurance',
-  'Final Expense', 'Auto Insurance', 'Homeowners', 'Renters Insurance',
+  'Life Insurance', 'Business Insurance', 'Commercial Auto Insurance', 'Home & Auto Insurance',
+  'Medicare Advantage', 'Part D', 'Final Expense', 'Homeowners', 'Renters Insurance',
   'Business Liability', 'Commercial Property', 'Workers Comp', 'Umbrella',
-  'Medicare Advantage', 'Medicare Supplement', 'Part D', 'Life Insurance',
-  'Final Expense', 'Auto Insurance', 'Homeowners', 'Renters Insurance',
+  'Life Insurance', 'Business Insurance', 'Commercial Auto Insurance', 'Home & Auto Insurance',
+  'Medicare Advantage', 'Part D', 'Final Expense', 'Homeowners', 'Renters Insurance',
   'Business Liability', 'Commercial Property', 'Workers Comp', 'Umbrella',
 ]
 

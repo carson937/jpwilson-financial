@@ -2,7 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
 export const metadata = {
-  title: 'Privacy Policy | Patrick Wilson Financial',
+  title: 'Privacy Policy | JP Wilson Financial Group',
   // Without this the root layout's `alternates.canonical: '/'` is
   // inherited, telling search engines this page is a duplicate of the
   // homepage.
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             <p>
               When you request a quote or contact us, we collect your name, phone number,
               email address, and information about your insurance needs. This information is
-              used solely to provide insurance quote follow-up from Patrick Wilson Financial.
+              used solely to provide insurance quote follow-up from JP Wilson Financial Group.
             </p>
           </section>
 

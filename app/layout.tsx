@@ -21,11 +21,11 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://jpwilsonfinancial.com'),
-  title: 'Patrick Wilson Financial | Independent Insurance Advisor',
+  title: 'JP Wilson Financial Group | Independent Insurance Advisor',
   description:
-    'Patrick Wilson Financial helps individuals, families, and businesses compare health, Medicare, life, business, auto, and home insurance options. Licensed in North Carolina, South Carolina, Georgia, and Tennessee. Office in Charlotte, NC.',
+    'JP Wilson Financial Group helps individuals, families, and businesses compare life, business, commercial auto, and home & auto insurance options. Health and Medicare coverage are also available. Licensed in North Carolina, South Carolina, Georgia, and Tennessee. Office in Charlotte, NC.',
   keywords:
-    'insurance broker, health insurance, Medicare insurance, life insurance, business insurance, general liability, workers compensation, independent insurance agent, Charlotte NC insurance, North Carolina, South Carolina, Georgia, Tennessee',
+    'insurance broker, life insurance, business insurance, commercial auto insurance, home and auto insurance, health insurance, Medicare insurance, general liability, workers compensation, independent insurance agent, Charlotte NC insurance, North Carolina, South Carolina, Georgia, Tennessee',
   // Official brand marks (intake 2026-07-29-official-logos).
   icons: {
     icon: [
@@ -36,19 +36,19 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'Patrick Wilson Financial | Independent Insurance Advisor',
+    title: 'JP Wilson Financial Group | Independent Insurance Advisor',
     description:
-      'Independent insurance guidance for health, Medicare, life, business, auto, and home coverage. Licensed in NC, SC, GA, and TN.',
+      'Independent insurance guidance for life, business, commercial auto, and home & auto coverage. Licensed in NC, SC, GA, and TN.',
     type: 'website',
     url: '/',
-    siteName: 'Patrick Wilson Financial',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Patrick Wilson Financial' }],
+    siteName: 'JP Wilson Financial Group',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'JP Wilson Financial Group' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Patrick Wilson Financial | Independent Insurance Advisor',
+    title: 'JP Wilson Financial Group | Independent Insurance Advisor',
     description:
-      'Independent insurance guidance for health, Medicare, life, business, auto, and home coverage. Licensed in NC, SC, GA, and TN.',
+      'Independent insurance guidance for life, business, commercial auto, and home & auto coverage. Licensed in NC, SC, GA, and TN.',
     images: ['/og-image.png'],
   },
   alternates: {
@@ -75,7 +75,7 @@ export const viewport: Viewport = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'InsuranceAgency',
-  name: 'Patrick Wilson Financial',
+  name: 'JP Wilson Financial Group',
   url: 'https://jpwilsonfinancial.com',
   telephone: '+1-866-786-1585',
   email: 'contact@jpwilsonfinancial.com',
@@ -101,15 +101,14 @@ const jsonLd = {
     ? { areaServed: licensedStateNames().map((name) => ({ '@type': 'State', name })) }
     : {}),
   serviceType: [
-    'Health Insurance',
-    'Medicare Insurance',
     'Life Insurance',
     'Business Insurance',
+    'Commercial Auto Insurance',
+    'Home & Auto Insurance',
     'General Liability Insurance',
     "Workers' Compensation Insurance",
-    'Auto Insurance',
-    'Homeowners Insurance',
-    'Renters Insurance',
+    'Health Insurance',
+    'Medicare Insurance',
   ],
 }
 

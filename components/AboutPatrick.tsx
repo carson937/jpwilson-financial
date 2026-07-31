@@ -65,7 +65,7 @@ export default function AboutPatrick() {
                 </p>
                 <p className="text-white/55 text-sm leading-relaxed">
                   In-person guidance from the Charlotte office at 1200 The Plaza,
-                  covering health, Medicare, life, business, and personal insurance.
+                  covering life, business, commercial auto, home &amp; auto, health, and Medicare insurance.
                 </p>
               </div>
             </div>

@@ -2,7 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
 export const metadata = {
-  title: 'Terms of Service | Patrick Wilson Financial',
+  title: 'Terms of Service | JP Wilson Financial Group',
   // Without this the root layout's `alternates.canonical: '/'` is
   // inherited, telling search engines this page is a duplicate of the
   // homepage.
@@ -28,7 +28,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-navy-950 font-bold text-lg mb-3">Use of This Website</h2>
             <p>
-              This website is operated by Patrick Wilson Financial. By using
+              This website is operated by JP Wilson Financial Group. By using
               this site, you agree to these terms. The information on
               this site is for general informational purposes and does not constitute
               insurance advice.
@@ -56,7 +56,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-navy-950 font-bold text-lg mb-3">Service Area</h2>
             <p>
-              Patrick Wilson Financial operates from 1200 The Plaza, Charlotte, NC 28205.
+              JP Wilson Financial Group operates from 1200 The Plaza, Charlotte, NC 28205.
               Patrick operates as an independent insurance advisor and is not
               exclusively affiliated with any single carrier.
             </p>

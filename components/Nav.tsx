@@ -87,7 +87,7 @@ export default function Nav() {
         <div className="flex items-center justify-between h-[72px] gap-4">
 
           {/* Brand mark — official lockup, light surface (nav is white) */}
-          <a href="/" className="flex items-center flex-shrink-0" aria-label="Patrick Wilson Financial — home">
+          <a href="/" className="flex items-center flex-shrink-0" aria-label="JP Wilson Financial Group — home">
             <span className="md:hidden">
               <BrandLockup height={30} alt="" />
             </span>
