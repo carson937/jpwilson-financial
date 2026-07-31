@@ -6,12 +6,12 @@ import { selectableStates } from '@/lib/licensedStates'
 import { isValidState, isValidUSPhone, isValidZip, splitFullName } from '@/lib/leadValidation'
 
 const coverages = [
+  { id: 'life',      label: 'Life Insurance',      sub: 'Term · Whole · Final Expense' },
+  { id: 'business',  label: 'Business Insurance',  sub: 'Liability · Property · Workers Comp' },
+  { id: 'auto',      label: 'Auto Insurance',      displayLabel: 'Commercial Auto Insurance', sub: 'Personal & Commercial' },
+  { id: 'home',      label: 'Home Insurance',      displayLabel: 'Home & Auto Insurance',       sub: 'Homeowners · Renters · Landlord' },
   { id: 'health',    label: 'Health Insurance',    sub: 'Individual · Group · Family' },
   { id: 'medicare',  label: 'Medicare',            sub: 'Advantage · Supplement · Part D' },
-  { id: 'life',      label: 'Life Insurance',      sub: 'Term · Whole · Final Expense' },
-  { id: 'auto',      label: 'Auto Insurance',      sub: 'Personal & Commercial' },
-  { id: 'home',      label: 'Home Insurance',      sub: 'Homeowners · Renters · Landlord' },
-  { id: 'business',  label: 'Business Insurance',  sub: 'Liability · Property · Workers Comp' },
 ]
 
 const followUp: Record<string, { q: string; opts: string[] }> = {
@@ -162,7 +162,7 @@ export default function LeadCapture() {
                   className="flex min-h-11 items-center justify-between px-4 py-3 border border-white/12 text-left transition-all duration-200 group hover:border-gold/40 hover:bg-white/3"
                 >
                   <div>
-                    <p className="text-white/90 font-semibold text-sm">{c.label}</p>
+                    <p className="text-white/90 font-semibold text-sm">{c.displayLabel ?? c.label}</p>
                     <p className="text-white/65 text-xs">{c.sub}</p>
                   </div>
                   <svg className="w-4 h-4 text-white/35 group-hover:text-gold transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
