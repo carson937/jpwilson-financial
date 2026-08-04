@@ -29,3 +29,6 @@ node_modules
 # Logs
 *.log
 npm-debug.log*
+
+# Auto-generated claude-mem context dump — regenerated per session, never commit
+AGENTS.md
