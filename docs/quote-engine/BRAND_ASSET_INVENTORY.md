@@ -24,7 +24,7 @@
 | iCloud `Dad logos/Bbb/` | 8 files — **none are JP Wilson assets** |
 
 **Excluded by standing instruction:** the legacy Desktop/iCloud repository at
-`…/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial` was **not accessed**, per the
+the legacy local copy of this site was **not accessed**, per the
 directive never to read, edit, or compare against it. If the original `2026-07-29-official-logos`
 intake delivery lives there, it remains unverified by this audit.
 

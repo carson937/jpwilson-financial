@@ -1,3 +1,9 @@
+> **Status (verified 2026-10-02): PLANNED — NOT CONFIGURED IN PRODUCTION.** No AgencyZoom
+> variables exist in the production environment, so this path is dormant and has never been
+> production-proven. Production leads go site → Jotform → Zapier → CRM (see
+> `lead-intake-and-analytics.md`). Do not describe AgencyZoom as live. Enabling it needs account
+> access, the configuration below, and a controlled production test.
+
 # AgencyZoom lead intake
 
 The Auto, Life, and combined General Liability + Workers Comp funnels share

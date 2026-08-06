@@ -3,11 +3,16 @@
 ## Current Lead Path
 
 Website forms submit to `/api/submit-lead`, which normalizes and validates the
-payload and maps product funnels into one internal JP lead schema. Auto, Life,
-and the combined General Liability + Workers Comp funnel attempt AgencyZoom
-first. The established Jotform → Zapier intake remains the recoverable downstream
-path when AgencyZoom is disabled or temporarily unavailable. Legacy website
-forms continue through Jotform. See `docs/agencyzoom-integration.md`.
+payload and maps product funnels into one internal JP lead schema, then submits it
+to the client's Jotform form (ID in `app/api/submit-lead/route.ts`). A Zapier workflow
+carries it from Jotform into the client's CRM; that workflow lives in Zapier, not in this
+repository.
+
+**Production reality (verified 2026-10-02):** the live path is site → `/api/submit-lead` →
+Jotform → Zapier → CRM. The AgencyZoom-first branch in the route is **dormant**: no
+AgencyZoom variables are configured in production, so every lead takes the Jotform path
+(response `acceptedVia: "jotform"`). AgencyZoom is a planned, not production-proven
+integration — see `docs/agencyzoom-integration.md` before enabling it.
 
 ## Lead Fields And Jotform Mapping
 
