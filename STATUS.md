@@ -1,13 +1,14 @@
 # STATUS — jpwilson-financial
 
+> This repository is public. Deploy identifiers, automation IDs, vendor account names,
+> dashboard links, and local filesystem paths are kept out of this file deliberately.
+> Build and release state is recorded here because developers need it.
+
 - **Project:** JP Wilson Financial (client site)
 - **Status:** ACTIVE
 - **Live URL:** https://www.jpwilsonfinancial.com
-- **Deploy platform:** Vercel (project: `jpwilson-financial`)
-- **Canonical source:** `/Users/carsonwilson/Projects/jpwilson-financial` (recovered + relocated 2026-07-30)
-- **GitHub:** `git@github.com:carson937/jpwilson-financial.git`
-- **Owner:** Carson (CAPS)
-- **Client:** JP Wilson Financial
+- **Deploy platform:** Vercel (project name matches this repository)
+- **Canonical source:** this repository (source recovered + relocated 2026-07-30)
 - **Stack:** Next.js + React + Tailwind
 - **Last verified live:** 2026-07-04
 - **Last local verification:** 2026-07-30 (typecheck, lint, production build, route + mobile QA)
@@ -16,9 +17,9 @@
 
 | Integration | Status | Notes |
 |---|---|---|
-| Jotform lead form (ID `261496542238059`) | LIVE | Hardcoded, no env vars |
-| Zapier lead automation | LIVE | Zap `#368000737` — Jotform → EZLynx |
-| EZLynx Sales Center | VERIFIED IN TEST | Prior end-to-end test created a visible Sales Center opportunity. Earlier 403 is resolved. **A new live production test is still required after deployment.** |
+| Jotform lead form | LIVE | Form ID lives in `.env.example` and `app/api/submit-lead/route.ts`; no server env vars |
+| Zapier lead automation | LIVE | Routes Jotform submissions downstream. Configured in Zapier, not in this repo. |
+| Downstream delivery | VERIFIED IN TEST | Confirmed end to end in pre-deployment testing. One controlled production lead remains on the launch checklist. |
 
 ## Forms status
 
@@ -26,16 +27,24 @@
 
 ## Known issues
 
-- **Live production lead test still outstanding.** The website → Jotform → Zapier → EZLynx chain was proven end to end in testing and produced a visible Sales Center opportunity, but that was a pre-deployment test. Re-run one controlled lead against production after the cutover and confirm the opportunity appears before calling the pipeline live.
-- No reversed (light-on-dark) or transparent master logo has been supplied. The footer therefore shows the official crest only, and the navy wordmark is not placed on dark surfaces. Request a reversed master from the client.
-- No vector (SVG/AI/EPS/PDF) logo source. Current brand assets are raster and are not print-safe.
-- Prior to 2026-07-04, project source was not GitHub-backed (fixed in Phase F)
+- **Launch checklist item:** one controlled production lead. The site → Jotform → Zapier
+  chain was proven end to end in pre-deployment testing; re-run a single controlled lead
+  against production after cutover and confirm it arrives. See
+  `docs/lead-intake-and-analytics.md`.
+- No reversed (light-on-dark) or transparent master logo has been supplied. The footer
+  therefore shows the official crest only, and the navy wordmark is not placed on dark
+  surfaces. Request a reversed master from the client.
+- No vector (SVG/AI/EPS/PDF) logo source. Current brand assets are raster and are not
+  print-safe.
+- Prior to 2026-07-04, project source was not GitHub-backed (fixed in Phase F).
 
 ## Rollback
 
+Run from the repository root:
+
 ```bash
 # Vercel deploy rollback
-cd /Users/carsonwilson/Projects/jpwilson-financial
+bunx vercel ls
 bunx vercel promote <previous-deployment-url>
 
 # Source rollback
@@ -46,10 +55,13 @@ git push --force-with-lease origin main    # only if remote must match reset
 
 ## Do not
 
-- Do not deploy from any other folder — `/Users/carsonwilson/Projects/jpwilson-financial` is the single canonical source
-- Do not read from, edit, or deploy the retired copy at `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial/`
-- Do not replace the official logo files in `public/brand/` with regenerated or redrawn artwork
-- Do not rename `.vercel/` folder — that is the deploy link to Vercel project
-- Do not commit `.env.local` or any file containing Jotform API keys / EZLynx creds
+- Do not deploy from any folder other than a clone of this repository. If a second local
+  copy of this site exists, it is stale.
+- Do not replace the official logo files in `public/brand/` with regenerated or redrawn
+  artwork.
+- Do not rename `.vercel/` — it is the deploy link to the Vercel project, and it is
+  gitignored.
+- Do not commit `.env.local` or any file containing Jotform or CRM credentials.
 
-See `SOURCE_OF_TRUTH.md` for the full deploy + verification protocol.
+See `SOURCE_OF_TRUTH.md` for the full deploy + verification protocol, and `AGENTS.md` for
+agent working rules.

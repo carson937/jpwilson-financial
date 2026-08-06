@@ -30,5 +30,7 @@ node_modules
 *.log
 npm-debug.log*
 
-# Auto-generated claude-mem context dump — regenerated per session, never commit
-AGENTS.md
+# NOTE: AGENTS.md was previously ignored here because an auto-generated claude-mem
+# context dump landed at that path. AGENTS.md is now hand-authored agent doctrine and is
+# tracked deliberately. If a generated context dump ever reappears at an instruction path,
+# delete the dump — do not re-ignore the path.

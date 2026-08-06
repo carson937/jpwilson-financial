@@ -5,13 +5,12 @@ import Image from 'next/image'
  * OFFICIAL BRAND MARKS — DO NOT SUBSTITUTE
  * ============================================================================
  *
- * Source of truth: client intake `2026-07-29-official-logos`
- *   CLIENT_PROJECTS/jp-wilson/00_INBOX/Processed/2026/07/2026-07-29-official-logos/manifest.json
+ * Source of truth: the client's `2026-07-29-official-logos` intake delivery, held in the
+ * operator's private client workspace (not in this repository).
  *
- * The files in `public/brand/` are byte-identical copies of the curated
- * originals in `CLIENT_PROJECTS/jp-wilson/04_ASSETS/Brand`. Never redraw,
- * trace, recolour, crop, stretch, or regenerate them. If a new variant is
- * needed, it comes from the client — not from this repo.
+ * The files in `public/brand/` are byte-identical copies of those curated
+ * originals. Never redraw, trace, recolour, crop, stretch, or regenerate them.
+ * If a new variant is needed, it comes from the client — not from this repo.
  *
  * A hand-drawn SVG approximation of the crest previously stood in for the real
  * mark (`public/favicon.svg`, removed 2026-07-30). Do not reintroduce it.

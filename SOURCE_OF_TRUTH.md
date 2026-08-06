@@ -2,38 +2,47 @@
 
 **Canonical source for the JP Wilson Financial production website.**
 
+> This repository is public. Deploy identifiers, org slugs, dashboard links, and local
+> filesystem paths belong in the Vercel dashboard and the operator's private records — not
+> in this file. Everything below is what a developer needs to build, deploy, and roll back.
+
 - **Live URL:** https://www.jpwilsonfinancial.com (primary), https://jpwilsonfinancial.com (apex redirect)
-- **Vercel project:** `jpwilson-financial` (org: `carson24wilson-3306s-projects`)
-- **Vercel project ID:** `prj_4ZhE9c2KIms5bykgCqHlK1SKoghR`
-- **Aliases:** `jpwilsonfinancial.com`, `jpwilson-financial.vercel.app`
 - **Stack:** Next.js + React + Tailwind
-- **Canonical path:** `/Users/carsonwilson/Projects/jpwilson-financial`
-- **Retired path (do not use):** `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/WEBSITES/jpwilson-financial/`
-- **Client workspace:** `~/Desktop/AI-Hub/02_CAPS/05_FULFILLMENT/CLIENT_PROJECTS/jp-wilson/`
-- **Deploy platform:** Vercel (single-platform)
-- **GitHub:** `git@github.com:carson937/jpwilson-financial.git`
+- **Package manager:** `npm` (`package-lock.json`)
+- **Deploy platform:** Vercel (single-platform). The Vercel project name matches this repository.
+- **Repository:** this repo is the sole deploy-linked source. No fork, no duplicate.
 - **Locked:** 2026-07-04
-- **Relocated to `~/Projects`:** 2026-07-30 after full source recovery
+- **Source recovered and relocated:** 2026-07-30 (see repository history)
 
-## Do not edit anywhere else.
+## Do not edit anywhere else
 
-This is the sole deploy-linked source folder. No fork, no duplicate.
+Work from a clone of this repository. If you find a second copy of this site on a local
+disk, it is stale — do not read from it, edit it, or deploy it. This repository is the only
+source of truth.
 
 ## Deploy
 
+Run from the repository root:
+
 ```bash
-cd /Users/carsonwilson/Projects/jpwilson-financial
 bunx vercel --prod
 ```
 
+Vercel resolves the project from the linked `.vercel` directory, which is gitignored and
+created by `bunx vercel link`. If the project is not linked, link it once from the Vercel
+dashboard rather than hardcoding identifiers here.
+
 ## Rollback
 
-**Vercel:** prior deploys retained, promotable via:
+**Vercel:** prior deploys are retained and promotable.
+
 ```bash
-bunx vercel promote <previous-deployment-url>
+bunx vercel ls                                  # list deployments
+bunx vercel promote <previous-deployment-url>   # promote a known-good one
 ```
 
-**Source:** GitHub remote at `carson937/jpwilson-financial` holds full commit history. `git reset --hard <sha>` restores any tracked state.
+**Source:** the GitHub remote holds full commit history. `git reset --hard <sha>` restores
+any tracked state.
 
 ## Verification protocol
 
@@ -43,11 +52,16 @@ curl -sI https://www.jpwilsonfinancial.com
 ```
 
 If unexpected behavior appears, cross-reference:
-- Live HTML fingerprint vs local `app/page.tsx` output
-- Vercel deploy ID (`bunx vercel ls`) vs last known good deploy
+
+- live HTML fingerprint vs local `app/page.tsx` output
+- current Vercel deploy (`bunx vercel ls`) vs the last known good deploy
 
 ## Client-side integration notes
 
-- **Jotform lead form:** ID `261496542238059` (hardcoded per `.env.example` — no server env vars required)
-- **Zapier flow:** Zap `#368000737` — leads Jotform → EZLynx
-- **EZLynx Sales Center:** end-to-end test confirmed — a visible Sales Center opportunity was created. The earlier 403 is resolved. One controlled live production test is still required after deployment.
+- **Jotform lead form** — embedded client-side. The form ID lives in `.env.example` and
+  `app/api/submit-lead/route.ts`; no server env vars are required.
+- **Lead automation** — submissions route from Jotform into the client's CRM via a Zapier
+  workflow. The workflow is configured in Zapier, not in this repository. If lead delivery
+  breaks, the failure is in that workflow, not in the site build.
+- **CRM delivery** — end-to-end delivery into the client's CRM has been confirmed in
+  testing. One controlled live production test remains outstanding after deployment.
