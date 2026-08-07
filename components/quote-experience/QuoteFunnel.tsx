@@ -134,6 +134,10 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
     if (result.ok) {
       trackSubmissionSucceeded(product, result.acceptedVia)
+      // The confirmation view has no need for contact details. Release them
+      // from component memory as soon as delivery is confirmed.
+      setAnswers({})
+      requestIdRef.current = ''
       setDone(true)
       // Replace, not push: Back from the success screen must not re-open the
       // contact step and invite a second submission.

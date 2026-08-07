@@ -59,7 +59,8 @@ export function normalizeText(value: unknown, maxLength = 500) {
 }
 
 export function normalizePhone(value: unknown) {
-  return String(value ?? '').trim().slice(0, 40)
+  const digits = String(value ?? '').replace(/\D/g, '')
+  return digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits
 }
 
 export function isValidUSPhone(value: string) {
@@ -82,7 +83,7 @@ export function isValidState(value: string) {
 }
 
 export function normalizeZip(value: unknown) {
-  return String(value ?? '').replace(/\D/g, '').slice(0, 5)
+  return String(value ?? '').trim()
 }
 
 export function isValidZip(value: string) {
@@ -103,8 +104,15 @@ export function splitFullName(value: string) {
   }
 }
 
+/** A name needs at least one letter, while allowing international names and punctuation. */
+export function hasNameLetter(value: string) {
+  // Constructor form keeps the project's ES5 TypeScript target happy while
+  // modern browsers still get Unicode-property matching.
+  return new RegExp('\\p{L}', 'u').test(value)
+}
+
 export function validateLead(payload: LeadPayload) {
-  if (!payload.firstName && !payload.lastName) {
+  if ((!payload.firstName && !payload.lastName) || !hasNameLetter(`${payload.firstName} ${payload.lastName}`)) {
     return 'Name is required.'
   }
   if (!payload.phone) {

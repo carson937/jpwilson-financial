@@ -24,8 +24,8 @@ export default function QuoteShell({
   children: React.ReactNode
 }) {
   return (
-    <div className="w-full max-w-[440px]">
-      <div className="rounded-2xl border border-navy-900/[0.07] bg-white px-6 pb-6 pt-7 shadow-[0_1px_2px_rgba(12,24,41,0.04),0_12px_32px_-12px_rgba(12,24,41,0.16)] sm:px-8 sm:pb-7 sm:pt-8">
+    <div className="w-full max-w-[600px]">
+      <div className="rounded-2xl border border-navy-900/[0.07] bg-white px-5 pb-6 pt-7 shadow-[0_1px_2px_rgba(12,24,41,0.04),0_12px_32px_-12px_rgba(12,24,41,0.16)] sm:px-9 sm:pb-8 sm:pt-9 lg:px-12 lg:pb-10 lg:pt-10">
         <div className="mb-5 flex items-center justify-between gap-4">
           <BrandLockup height={26} alt="JP Wilson Financial Group" />
           {step !== null && (

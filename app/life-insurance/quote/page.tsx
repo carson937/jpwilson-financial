@@ -29,7 +29,7 @@ export default function LifeQuotePage() {
   return (
     <main
       id="main"
-      className="qx-surface flex min-h-[100dvh] items-center justify-center bg-[#FAF8F4] px-4 py-8 sm:py-12"
+      className="qx-surface flex min-h-[100dvh] items-center justify-center bg-[#FAF8F4] px-4 py-8 sm:px-6 sm:py-12 lg:px-10"
       style={{
         paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
         paddingTop: 'calc(2rem + env(safe-area-inset-top))',

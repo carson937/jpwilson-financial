@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  LeadPayload,
   isValidOptionalEmail,
   isValidOptionalHomeOwnership,
   isValidState,
@@ -14,12 +13,14 @@ import {
   normalizeZip,
   validateLead,
 } from '@/lib/leadValidation'
+import type { LeadPayload } from '@/lib/leadValidation'
 import { composeNotes } from '@/lib/quote-experience/adapter'
 import { validateProductAnswers } from '@/lib/quote-experience/products'
 
 const JOTFORM_FORM_ID = '261496542238059'
 const JOTFORM_URL = `https://submit.jotform.com/submit/${JOTFORM_FORM_ID}/`
 const MAX_PAYLOAD_BYTES = 10 * 1024
+const MAX_JOTFORM_RESPONSE_BYTES = 64 * 1024
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const RATE_LIMIT_MAX = 5
 
@@ -42,6 +43,92 @@ const NOTIFICATION_TIMEOUT_MS = 5_000
  */
 const DEDUPE_TTL_MS = 5 * 60 * 1000
 const DEDUPE_MAX_ENTRIES = 500
+
+const ALLOWED_BODY_FIELDS = new Set([
+  'firstName',
+  'lastName',
+  'phone',
+  'email',
+  'state',
+  'zip',
+  'coverageLabel',
+  'situation',
+  'urgency',
+  'notes',
+  'source',
+  'website',
+  'product',
+  'homeOwnership',
+  'requestId',
+])
+
+const FIELD_LIMITS: Record<string, number> = {
+  firstName: 80,
+  lastName: 80,
+  phone: 40,
+  email: 254,
+  state: 2,
+  zip: 5,
+  coverageLabel: 120,
+  situation: 160,
+  urgency: 80,
+  notes: 1000,
+  source: 80,
+  website: 200,
+  product: 40,
+  homeOwnership: 10,
+  requestId: 64,
+}
+
+const COVERAGE_LABELS = new Set([
+  'Life Insurance',
+  'Business Insurance',
+  'Auto Insurance',
+  'Home Insurance',
+  'Health Insurance',
+  'Medicare',
+  'Medicare (Advantage / Supplement / Part D)',
+  'Home / Renters Insurance',
+  'Multiple, not sure yet',
+  'Not specified',
+])
+
+const LEAD_SOURCES = new Set(['Hero Quiz Funnel', 'Free Quote Form', 'Life Quote Funnel'])
+const SITUATIONS = new Set([
+  'Individual or family plan',
+  'Small group / employees',
+  'Losing current coverage',
+  'Comparing plan costs',
+  'Just exploring options',
+  'Turning 65 soon',
+  'Already on Medicare',
+  'Losing employer coverage',
+  'Reviewing my options',
+  'Helping a family member',
+  'Protect my family',
+  'Replace lost income',
+  'Cover final expenses',
+  'Build long-term wealth',
+  'Not sure yet',
+  'Looking for a lower rate',
+  'Buying a vehicle',
+  'Switching insurance companies',
+  'Need commercial coverage',
+  'Homeowner policy',
+  'Rental property',
+  'Condo',
+  'Renters insurance',
+  'Comparing rates',
+  'Contractor',
+  'Trucking',
+  'Retail',
+  'Professional Services',
+  'Other',
+])
+const URGENCY_VALUES = new Set(['ASAP', 'Within 30 Days', 'Within 90 Days', 'Just Researching'])
+const CONTROL_CHARACTER = /[\u0000-\u001F\u007F]/
+const HTML_METACHARACTER = /[<>]/
+const REQUEST_ID = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|qx-\d{13}-[a-z0-9]{8})$/i
 
 type RateEntry = { count: number; resetAt: number }
 
@@ -116,29 +203,101 @@ function isRateLimited(key: string) {
   return current.count > RATE_LIMIT_MAX
 }
 
+function json(body: Record<string, unknown>, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      // Lead responses are never useful in an intermediary cache.
+      'Cache-Control': 'no-store, max-age=0',
+    },
+  })
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** Reject bad input instead of silently truncating or stripping it into something else. */
+function validateRequestShape(body: Record<string, unknown>) {
+  for (const key of Object.keys(body)) {
+    if (!ALLOWED_BODY_FIELDS.has(key)) return 'Invalid request.'
+  }
+
+  for (const [field, limit] of Object.entries(FIELD_LIMITS)) {
+    const value = body[field]
+    if (value === undefined) continue
+    if (
+      typeof value !== 'string' ||
+      value.length > limit ||
+      CONTROL_CHARACTER.test(value) ||
+      HTML_METACHARACTER.test(value)
+    ) {
+      return 'Invalid request.'
+    }
+  }
+
+  return ''
+}
+
+function isSameOriginRequest(req: NextRequest) {
+  const origin = req.headers.get('origin')
+  // Browsers send Origin on fetch/XHR POSTs. Requests without it are still
+  // constrained to JSON, while this keeps operational health checks possible.
+  return !origin || origin === req.nextUrl.origin
+}
+
+function isJsonRequest(req: NextRequest) {
+  return req.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase() === 'application/json'
+}
+
+function isHttpsUrl(value: string | undefined) {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
+
+function validateLeadClassification(lead: LeadPayload) {
+  if (!COVERAGE_LABELS.has(lead.coverageLabel)) return 'Unable to accept this request.'
+  if (!LEAD_SOURCES.has(lead.source)) return 'Unable to accept this request.'
+  if (lead.situation && !SITUATIONS.has(lead.situation)) return 'Unable to accept this request.'
+  if (lead.urgency && !URGENCY_VALUES.has(lead.urgency)) return 'Unable to accept this request.'
+
+  // The locked Life funnel has one canonical product, source, and coverage
+  // combination. Prevent a crafted request from turning a product answer into
+  // arbitrary CRM/Jotform fields.
+  if (
+    lead.product === 'life' &&
+    (lead.coverageLabel !== 'Life Insurance' ||
+      lead.source !== 'Life Quote Funnel' ||
+      lead.situation ||
+      lead.urgency ||
+      lead.notes)
+  ) {
+    return 'Unable to accept this request.'
+  }
+
+  return ''
+}
+
 function logLeadEvent(
   level: 'info' | 'warn' | 'error',
   message: string,
-  payload: Partial<LeadPayload> & Record<string, unknown> = {},
+  payload: Record<string, unknown> = {},
 ) {
-  const redacted = {
+  const safeMetadata = {
+    requestId: payload.requestId,
     source: payload.source,
-    coverageLabel: payload.coverageLabel,
-    situation: payload.situation,
-    urgency: payload.urgency,
-    state: payload.state,
     product: payload.product,
-    // Own/Rent is a two-value category, not an identifier. Safe to log, and
-    // useful when diagnosing a funnel that is dropping a step.
-    homeOwnership: payload.homeOwnership,
-    hasEmail: Boolean(payload.email),
-    phoneLast4: typeof payload.phone === 'string' ? payload.phone.replace(/\D/g, '').slice(-4) : undefined,
     error: payload.error,
     status: payload.status,
     acceptedVia: payload.acceptedVia,
   }
 
-  console[level](JSON.stringify({ scope: 'submit-lead', message, ...redacted }))
+  console[level](JSON.stringify({ scope: 'submit-lead', message, ...safeMetadata }))
 }
 
 function normalizeLead(body: Record<string, unknown>): LeadPayload {
@@ -174,6 +333,8 @@ function publicValidationError(lead: LeadPayload) {
   // enforces this for feedback; the server enforces it for real.
   const productError = validateProductAnswers(lead)
   if (productError) return productError
+  const classificationError = validateLeadClassification(lead)
+  if (classificationError) return classificationError
   return ''
 }
 
@@ -222,7 +383,15 @@ async function submitToJotform(lead: LeadPayload) {
     signal: AbortSignal.timeout(JOTFORM_TIMEOUT_MS),
   })
 
+  const responseLength = Number(res.headers.get('content-length') ?? '0')
+  if (Number.isFinite(responseLength) && responseLength > MAX_JOTFORM_RESPONSE_BYTES) {
+    return { accepted: false, status: res.status, reason: 'jotform_response_too_large' }
+  }
+
   const text = await res.text()
+  if (new TextEncoder().encode(text).length > MAX_JOTFORM_RESPONSE_BYTES) {
+    return { accepted: false, status: res.status, reason: 'jotform_response_too_large' }
+  }
   const acceptedStatus = res.status >= 200 && res.status < 400
   const knownValidationFailure = /submission-error|Incomplete Values|error-message/i.test(text)
   const likelyAccepted =
@@ -241,7 +410,7 @@ async function submitToJotform(lead: LeadPayload) {
 }
 
 async function submitToFallback(lead: LeadPayload) {
-  const fallbackUrl = process.env.LEAD_FALLBACK_WEBHOOK_URL
+  const fallbackUrl = isHttpsUrl(process.env.LEAD_FALLBACK_WEBHOOK_URL)
   if (!fallbackUrl) return { accepted: false, status: 0, reason: 'fallback_not_configured' }
 
   const res = await fetch(fallbackUrl, {
@@ -276,7 +445,7 @@ async function submitToFallback(lead: LeadPayload) {
  * design: log the failure, keep the success response.
  */
 async function notifyLeadAccepted(lead: LeadPayload, acceptedVia: string) {
-  const notificationUrl = process.env.LEAD_NOTIFICATION_WEBHOOK_URL
+  const notificationUrl = isHttpsUrl(process.env.LEAD_NOTIFICATION_WEBHOOK_URL)
   if (!notificationUrl) return
 
   try {
@@ -309,34 +478,57 @@ async function notifyLeadAccepted(lead: LeadPayload, acceptedVia: string) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isSameOriginRequest(req)) {
+    return json({ error: 'Invalid request.' }, 403)
+  }
+
+  if (!isJsonRequest(req)) {
+    return json({ error: 'Content-Type must be application/json.' }, 415)
+  }
+
+  const contentLength = Number(req.headers.get('content-length') ?? '0')
+  if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
+    return json({ error: 'Request is too large.' }, 413)
+  }
+
   const key = clientKey(req)
 
   if (isRateLimited(key)) {
-    logLeadEvent('warn', 'rate_limited', { source: 'unknown' })
-    return NextResponse.json({ error: 'Too many attempts. Please wait a minute and try again.' }, { status: 429 })
+    logLeadEvent('warn', 'rate_limited')
+    return json({ error: 'Too many attempts. Please wait a minute and try again.' }, 429)
   }
 
   const raw = await req.text()
   if (new TextEncoder().encode(raw).length > MAX_PAYLOAD_BYTES) {
-    return NextResponse.json({ error: 'Request is too large.' }, { status: 413 })
+    return json({ error: 'Request is too large.' }, 413)
   }
 
-  let body: Record<string, unknown>
+  let parsed: unknown
   try {
-    body = JSON.parse(raw)
+    parsed = JSON.parse(raw)
   } catch {
-    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+    return json({ error: 'Invalid request.' }, 400)
+  }
+
+  if (!isPlainObject(parsed)) {
+    return json({ error: 'Invalid request.' }, 400)
+  }
+
+  const body = parsed
+  const shapeError = validateRequestShape(body)
+  if (shapeError) {
+    return json({ error: shapeError }, 400)
   }
 
   if (normalizeText(body.website, 200)) {
-    logLeadEvent('warn', 'honeypot_rejected', { source: normalizeText(body.source, 80) })
-    return NextResponse.json({ error: 'Unable to accept this request.' }, { status: 400 })
+    logLeadEvent('warn', 'honeypot_rejected')
+    return json({ error: 'Unable to accept this request.' }, 400)
   }
 
   const lead = normalizeLead(body)
   const validationError = publicValidationError(lead)
   if (validationError) {
-    return NextResponse.json({ error: validationError }, { status: 422 })
+    return json({ error: validationError }, 422)
   }
 
   /**
@@ -345,48 +537,101 @@ export async function POST(req: NextRequest) {
    * they would have seen; JP does not get a duplicate.
    */
   const requestId = normalizeText(body.requestId, 64)
+  if (requestId && !REQUEST_ID.test(requestId)) {
+    return json({ error: 'Invalid request.' }, 400)
+  }
+
   const alreadyAccepted = findRecentSubmission(requestId)
   if (alreadyAccepted) {
     logLeadEvent('info', 'duplicate_suppressed', {
-      ...lead,
+      requestId,
       acceptedVia: alreadyAccepted.acceptedVia,
     })
-    return NextResponse.json({ success: true, acceptedVia: alreadyAccepted.acceptedVia })
+    return json({ success: true, acceptedVia: alreadyAccepted.acceptedVia })
   }
 
   try {
     const jotform = await submitToJotform(lead)
     if (jotform.accepted) {
-      logLeadEvent('info', 'accepted_by_jotform', { ...lead, status: jotform.status, acceptedVia: 'jotform' })
+      logLeadEvent('info', 'accepted_by_jotform', {
+        requestId,
+        product: lead.product,
+        source: lead.source,
+        status: jotform.status,
+        acceptedVia: 'jotform',
+      })
       rememberSubmission(requestId, 'jotform')
       await notifyLeadAccepted(lead, 'jotform')
-      return NextResponse.json({ success: true, acceptedVia: 'jotform' })
+      return json({ success: true, acceptedVia: 'jotform' })
     }
 
-    logLeadEvent('warn', 'jotform_not_accepted', { ...lead, status: jotform.status, error: jotform.reason })
+    logLeadEvent('warn', 'jotform_not_accepted', {
+      requestId,
+      product: lead.product,
+      source: lead.source,
+      status: jotform.status,
+      error: jotform.reason,
+    })
 
     const fallback = await submitToFallback(lead)
     if (fallback.accepted) {
       logLeadEvent('info', 'accepted_by_fallback', {
-        ...lead,
+        requestId,
+        product: lead.product,
+        source: lead.source,
         status: fallback.status,
         acceptedVia: 'fallback',
       })
       rememberSubmission(requestId, 'fallback')
       await notifyLeadAccepted(lead, 'fallback')
-      return NextResponse.json({ success: true, acceptedVia: 'fallback' })
+      return json({ success: true, acceptedVia: 'fallback' })
     }
 
-    logLeadEvent('error', 'lead_delivery_failed', { ...lead, status: fallback.status, error: fallback.reason })
+    logLeadEvent('error', 'lead_delivery_failed', {
+      requestId,
+      product: lead.product,
+      source: lead.source,
+      status: fallback.status,
+      error: fallback.reason,
+    })
   } catch (error) {
     logLeadEvent('error', 'lead_delivery_exception', {
-      ...lead,
+      requestId,
+      product: lead.product,
+      source: lead.source,
       error: error instanceof Error ? error.name : 'unknown_error',
     })
   }
 
-  return NextResponse.json(
+  return json(
     { error: 'We could not safely accept your request. Please call Patrick directly at (866) 786-1585.' },
-    { status: 502 },
+    502,
   )
+}
+
+function methodNotAllowed() {
+  return new NextResponse(null, {
+    status: 405,
+    headers: { Allow: 'POST', 'Cache-Control': 'no-store, max-age=0' },
+  })
+}
+
+export function GET() {
+  return methodNotAllowed()
+}
+
+export function PUT() {
+  return methodNotAllowed()
+}
+
+export function PATCH() {
+  return methodNotAllowed()
+}
+
+export function DELETE() {
+  return methodNotAllowed()
+}
+
+export function OPTIONS() {
+  return methodNotAllowed()
 }

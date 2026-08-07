@@ -129,7 +129,7 @@ export default function LeadCapture() {
       return
     }
 
-    trackEvent('form_submission_succeeded', { form: 'hero_quiz', coverage: coverageLabel, state })
+    trackEvent('form_submission_succeeded', { form: 'hero_quiz', coverage: coverageLabel })
     setStep(5)
     setSubmitting(false)
   }

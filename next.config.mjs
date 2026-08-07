@@ -3,13 +3,18 @@
 /**
  * Baseline security headers.
  *
- * A strict Content-Security-Policy is deliberately NOT set here. GA4, the Meta
- * Pixel, the inline JSON-LD block, and Next's own bootstrap scripts would all
- * need `script-src 'unsafe-inline'`, which strips most of the value while adding
- * real risk of silently breaking analytics in production. A nonce-based CSP is a
- * follow-up task with its own verification pass, not a launch-day change.
+ * This is a compatibility CSP rather than a nonce-based strict CSP: Next's App
+ * Router bootstrap and the optional analytics integrations use inline scripts.
+ * It still confines every other resource type, blocks framing, and prevents the
+ * browser from reaching arbitrary third-party endpoints. A future nonce rollout
+ * must be verified against the optional analytics before removing unsafe-inline.
  */
 const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value:
+      "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.facebook.com; img-src 'self' data: https://www.google-analytics.com https://www.facebook.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests",
+  },
   // Stop MIME sniffing turning a served asset into script.
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   // No framing: nothing here is meant to be embedded.

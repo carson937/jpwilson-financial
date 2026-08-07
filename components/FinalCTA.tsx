@@ -99,7 +99,7 @@ export default function FinalCTA() {
       return
     }
 
-    trackEvent('form_submission_succeeded', { form: 'bottom_form', coverage: coverage || 'Not specified', state })
+    trackEvent('form_submission_succeeded', { form: 'bottom_form', coverage: coverage || 'Not specified' })
     setSubmitted(true)
     setSubmitting(false)
   }

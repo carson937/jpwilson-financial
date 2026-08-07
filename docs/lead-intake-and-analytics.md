@@ -34,9 +34,10 @@ in a component.
 | source | `q10_leadSource` | Hero Quiz Funnel / Free Quote Form |
 | submissionDate | `q11_submissionDate` | ET timestamp |
 
-State and ZIP are also included in the fallback and notification webhook
-payloads (both spread the full lead object) and in the
-`form_submission_succeeded` analytics event context.
+State and ZIP are included in the optional fallback and notification webhook
+payloads because those are lead-delivery paths. Analytics receives no form
+answers: quote-funnel events contain only the product, version, and step ID;
+legacy-form events contain only the form and coverage category.
 
 The downstream CRM's prospect record requires Address Line 1, City, State, and Zip.
 State and Zip carry real submitted values. Address Line 1 and City are mapped in the Zapier
@@ -88,6 +89,11 @@ Tracked events:
 
 The conversion event fires only after `/api/submit-lead` confirms that a lead was
 accepted by Jotform or the configured fallback intake.
+
+The browser does not persist lead fields to URLs, storage, or cookies. The site
+has no session-replay integration. Server logs use request IDs and delivery
+metadata only; they do not log names, phones, emails, ZIP codes, notes, or full
+lead payloads.
 
 ## Scheduling
 

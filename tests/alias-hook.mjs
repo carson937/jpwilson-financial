@@ -24,6 +24,12 @@ function withExtension(url, context, nextResolve) {
 }
 
 export function resolve(specifier, context, nextResolve) {
+  // Next's package export is extensionless for bundlers, while Node's native
+  // ESM resolver needs the concrete file when route-handler tests import it.
+  if (specifier === 'next/server') {
+    return nextResolve('next/server.js', context)
+  }
+
   if (specifier.startsWith('@/')) {
     const resolved = withExtension(new URL(specifier.slice(2), ROOT).href, context, nextResolve)
     if (resolved) return resolved
