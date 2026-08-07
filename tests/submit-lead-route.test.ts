@@ -178,7 +178,7 @@ describe('submit-lead request boundary', () => {
     assert.deepEqual(statuses, [200, 200, 200, 200, 200, 429])
   })
 
-  it('never reports success when Jotform times out or returns an error', async (t) => {
+  it('never reports success when Jotform times out or returns a 4xx/5xx error', async (t) => {
     const originalFetch = globalThis.fetch
     t.after(() => {
       globalThis.fetch = originalFetch
@@ -191,10 +191,12 @@ describe('submit-lead request boundary', () => {
     assert.equal(timeout.status, 502)
     assert.equal((await responseJson(timeout)).success, undefined)
 
-    globalThis.fetch = async () => new Response('Service unavailable', { status: 503 })
-    const unavailable = await post(validLead())
-    assert.equal(unavailable.status, 502)
-    assert.equal((await responseJson(unavailable)).success, undefined)
+    for (const status of [400, 503]) {
+      globalThis.fetch = async () => new Response('Delivery failure', { status })
+      const failed = await post(validLead())
+      assert.equal(failed.status, 502)
+      assert.equal((await responseJson(failed)).success, undefined)
+    }
   })
 
   it('returns 405 and an explicit Allow header for unsupported methods', async () => {
