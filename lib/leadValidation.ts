@@ -20,6 +20,35 @@ export type LeadPayload = {
   notes: string
   source: string
   website?: string
+  /**
+   * Quote Experience additions. Both are optional so the existing Hero and
+   * Final CTA forms keep submitting exactly the payload they always have.
+   *
+   * `product` selects the server-side required-answer set (see
+   * lib/quote-experience/products.ts). `homeOwnership` is a closed enum.
+   */
+  product?: string
+  homeOwnership?: string
+}
+
+/**
+ * Home ownership is a closed set, not free text. An open string here would flow
+ * into the lead note and, later, into whatever downstream mapping consumes it.
+ */
+export const HOME_OWNERSHIP_VALUES = ['Own', 'Rent'] as const
+export type HomeOwnership = (typeof HOME_OWNERSHIP_VALUES)[number]
+
+export function normalizeHomeOwnership(value: unknown) {
+  const clean = normalizeText(value, 10)
+  const match = HOME_OWNERSHIP_VALUES.find(
+    (allowed) => allowed.toLowerCase() === clean.toLowerCase(),
+  )
+  return match ?? ''
+}
+
+export function isValidOptionalHomeOwnership(value: string) {
+  if (!value) return true
+  return (HOME_OWNERSHIP_VALUES as readonly string[]).includes(value)
 }
 
 export function normalizeText(value: unknown, maxLength = 500) {

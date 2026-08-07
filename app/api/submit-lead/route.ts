@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   LeadPayload,
   isValidOptionalEmail,
+  isValidOptionalHomeOwnership,
   isValidState,
   isValidUSPhone,
   isValidZip,
   normalizeEmail,
+  normalizeHomeOwnership,
   normalizePhone,
   normalizeState,
   normalizeText,
   normalizeZip,
   validateLead,
 } from '@/lib/leadValidation'
+import { composeNotes } from '@/lib/quote-experience/adapter'
+import { validateProductAnswers } from '@/lib/quote-experience/products'
 
 const JOTFORM_FORM_ID = '261496542238059'
 const JOTFORM_URL = `https://submit.jotform.com/submit/${JOTFORM_FORM_ID}/`
@@ -30,9 +34,69 @@ const JOTFORM_TIMEOUT_MS = 10_000
 const FALLBACK_TIMEOUT_MS = 8_000
 const NOTIFICATION_TIMEOUT_MS = 5_000
 
+/**
+ * How long a completed submission is remembered so a retry of the SAME request
+ * cannot create a second lead. Long enough to cover a visitor tapping again
+ * after a slow response; short enough that a genuine second enquiry is not
+ * swallowed.
+ */
+const DEDUPE_TTL_MS = 5 * 60 * 1000
+const DEDUPE_MAX_ENTRIES = 500
+
 type RateEntry = { count: number; resetAt: number }
 
 const rateLimit = new Map<string, RateEntry>()
+
+/**
+ * Accepted request ids → the result already returned for them.
+ *
+ * Instance-local, like the rate limiter. It reliably stops the common case (a
+ * double tap, or a client retry after a timeout that actually succeeded) and
+ * makes no claim beyond that — serverless instances do not share memory, so
+ * this is not distributed idempotency and must not be described as such.
+ */
+const recentSubmissions = new Map<string, { acceptedVia: string; expiresAt: number }>()
+
+function rememberSubmission(requestId: string, acceptedVia: string) {
+  if (!requestId) return
+
+  // Bounded: a long-lived instance must not accumulate ids without limit.
+  // `forEach` rather than for..of — this project targets ES5 output, where
+  // iterating a Map directly requires downlevelIteration.
+  if (recentSubmissions.size >= DEDUPE_MAX_ENTRIES) {
+    const now = Date.now()
+    const expired: string[] = []
+    recentSubmissions.forEach((entry, key) => {
+      if (entry.expiresAt <= now) expired.push(key)
+    })
+    expired.forEach((key) => recentSubmissions.delete(key))
+
+    // Still full of live entries: drop the oldest insertion to make room.
+    if (recentSubmissions.size >= DEDUPE_MAX_ENTRIES) {
+      let oldest: string | undefined
+      recentSubmissions.forEach((_entry, key) => {
+        if (oldest === undefined) oldest = key
+      })
+      if (oldest !== undefined) recentSubmissions.delete(oldest)
+    }
+  }
+
+  recentSubmissions.set(requestId, { acceptedVia, expiresAt: Date.now() + DEDUPE_TTL_MS })
+}
+
+function findRecentSubmission(requestId: string) {
+  if (!requestId) return null
+
+  const entry = recentSubmissions.get(requestId)
+  if (!entry) return null
+
+  if (entry.expiresAt <= Date.now()) {
+    recentSubmissions.delete(requestId)
+    return null
+  }
+
+  return entry
+}
 
 function clientKey(req: NextRequest) {
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -63,6 +127,10 @@ function logLeadEvent(
     situation: payload.situation,
     urgency: payload.urgency,
     state: payload.state,
+    product: payload.product,
+    // Own/Rent is a two-value category, not an identifier. Safe to log, and
+    // useful when diagnosing a funnel that is dropping a step.
+    homeOwnership: payload.homeOwnership,
     hasEmail: Boolean(payload.email),
     phoneLast4: typeof payload.phone === 'string' ? payload.phone.replace(/\D/g, '').slice(-4) : undefined,
     error: payload.error,
@@ -87,6 +155,8 @@ function normalizeLead(body: Record<string, unknown>): LeadPayload {
     notes: normalizeText(body.notes, 1000),
     source: normalizeText(body.source, 80),
     website: normalizeText(body.website, 200),
+    product: normalizeText(body.product, 40),
+    homeOwnership: normalizeHomeOwnership(body.homeOwnership),
   }
 }
 
@@ -97,6 +167,13 @@ function publicValidationError(lead: LeadPayload) {
   if (!isValidState(lead.state)) return 'Please select your state.'
   if (!isValidZip(lead.zip)) return 'Please enter a valid 5-digit ZIP code.'
   if (!isValidOptionalEmail(lead.email)) return 'Please enter a valid email address or leave it blank.'
+  if (!isValidOptionalHomeOwnership(lead.homeOwnership ?? '')) {
+    return 'Please tell us whether you own or rent.'
+  }
+  // Product funnels require more than the base lead contract. The client
+  // enforces this for feedback; the server enforces it for real.
+  const productError = validateProductAnswers(lead)
+  if (productError) return productError
   return ''
 }
 
@@ -111,6 +188,16 @@ async function submitToJotform(lead: LeadPayload) {
     hour12: true,
   })
 
+  /**
+   * The live form has no home-ownership question — verified against its
+   * question list, not assumed. Until one exists, the validated Own/Rent value
+   * is appended to the notes field as a single labelled line, built here from
+   * the sanitised payload rather than from anything the client formatted.
+   *
+   * See lib/quote-experience/adapter.ts for the upgrade path.
+   */
+  const notes = composeNotes(lead.notes, lead.homeOwnership ?? '')
+
   const params = new URLSearchParams({
     formID: JOTFORM_FORM_ID,
     'q2_q2_fullname0[first]': lead.firstName,
@@ -122,7 +209,7 @@ async function submitToJotform(lead: LeadPayload) {
     q5_q5_dropdown3: lead.coverageLabel,
     q6_q6_dropdown4: lead.situation,
     q7_q7_dropdown5: lead.urgency,
-    q8_q8_textarea6: lead.notes,
+    q8_q8_textarea6: notes,
     q10_leadSource: lead.source,
     q11_submissionDate: submissionDate,
   })
@@ -252,10 +339,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: validationError }, { status: 422 })
   }
 
+  /**
+   * A repeat of an already-accepted request returns the original success
+   * instead of delivering the lead twice. The visitor sees the same outcome
+   * they would have seen; JP does not get a duplicate.
+   */
+  const requestId = normalizeText(body.requestId, 64)
+  const alreadyAccepted = findRecentSubmission(requestId)
+  if (alreadyAccepted) {
+    logLeadEvent('info', 'duplicate_suppressed', {
+      ...lead,
+      acceptedVia: alreadyAccepted.acceptedVia,
+    })
+    return NextResponse.json({ success: true, acceptedVia: alreadyAccepted.acceptedVia })
+  }
+
   try {
     const jotform = await submitToJotform(lead)
     if (jotform.accepted) {
       logLeadEvent('info', 'accepted_by_jotform', { ...lead, status: jotform.status, acceptedVia: 'jotform' })
+      rememberSubmission(requestId, 'jotform')
       await notifyLeadAccepted(lead, 'jotform')
       return NextResponse.json({ success: true, acceptedVia: 'jotform' })
     }
@@ -269,6 +372,7 @@ export async function POST(req: NextRequest) {
         status: fallback.status,
         acceptedVia: 'fallback',
       })
+      rememberSubmission(requestId, 'fallback')
       await notifyLeadAccepted(lead, 'fallback')
       return NextResponse.json({ success: true, acceptedVia: 'fallback' })
     }
