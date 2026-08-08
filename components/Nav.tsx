@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import BrandLockup from './BrandLogo'
 import { trackEvent } from '@/lib/analytics'
@@ -87,14 +88,14 @@ export default function Nav() {
         <div className="flex items-center justify-between h-[72px] gap-4">
 
           {/* Brand mark — official lockup, light surface (nav is white) */}
-          <a href="/" className="flex items-center flex-shrink-0" aria-label="JP Wilson Financial Group — home">
+          <Link href="/" className="flex items-center flex-shrink-0" aria-label="JP Wilson Financial Group — home">
             <span className="md:hidden">
               <BrandLockup height={30} alt="" />
             </span>
             <span className="hidden md:inline-flex">
               <BrandLockup height={40} alt="" />
             </span>
-          </a>
+          </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8">
