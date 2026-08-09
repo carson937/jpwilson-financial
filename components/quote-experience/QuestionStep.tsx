@@ -37,6 +37,9 @@ export default function QuestionStep({
   const headingId = `qx-step-${step.id}-heading`
   const errorId = `qx-step-${step.id}-error`
   const firstFieldRef = useRef<HTMLInputElement & HTMLSelectElement>(null)
+  const contactError = error.toLowerCase()
+  const phoneInvalid = Boolean(error) && (!answers.phone || contactError.includes('phone'))
+  const emailInvalid = Boolean(error) && contactError.includes('email')
 
   /**
    * Move focus to the field when the step changes so keyboard and screen-reader
@@ -98,6 +101,7 @@ export default function QuestionStep({
             labelledBy={headingId}
             autoComplete={step.autoComplete}
             maxLength={120}
+            required
             invalid={Boolean(error)}
             describedBy={error ? errorId : undefined}
           />
@@ -131,6 +135,7 @@ export default function QuestionStep({
             inputMode="numeric"
             autoComplete="postal-code"
             maxLength={5}
+            required
             invalid={Boolean(error)}
             describedBy={error ? errorId : undefined}
           />
@@ -164,7 +169,8 @@ export default function QuestionStep({
             email={answers.email ?? ''}
             onPhoneChange={(value) => onAnswer('phone', value)}
             onEmailChange={(value) => onAnswer('email', value)}
-            invalid={Boolean(error)}
+            phoneInvalid={phoneInvalid}
+            emailInvalid={emailInvalid}
             describedBy={error ? errorId : undefined}
           />
         )}
@@ -195,7 +201,7 @@ export default function QuestionStep({
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex h-[52px] min-w-[168px] items-center justify-center gap-2.5 rounded-xl bg-navy-900 px-7 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-900/25 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex h-[52px] min-w-[184px] items-center justify-center gap-2.5 rounded-xl bg-navy-900 px-5 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-900/25 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70 sm:px-7"
         >
           {submitting ? (
             <>

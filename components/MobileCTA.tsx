@@ -15,7 +15,7 @@ export default function MobileCTA() {
   return (
     <div
       aria-hidden={!visible}
-      className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${
+      className={`site-mobile-cta fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${
         visible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       }`}
     >

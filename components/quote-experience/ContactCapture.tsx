@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useRef } from 'react'
 import TextInput from './TextInput'
 
 /**
@@ -20,13 +20,16 @@ export default forwardRef<
     email: string
     onPhoneChange: (value: string) => void
     onEmailChange: (value: string) => void
-    invalid: boolean
+    phoneInvalid: boolean
+    emailInvalid: boolean
     describedBy?: string
   }
 >(function ContactCapture(
-  { phone, email, onPhoneChange, onEmailChange, invalid, describedBy },
+  { phone, email, onPhoneChange, onEmailChange, phoneInvalid, emailInvalid, describedBy },
   ref,
 ) {
+  const emailRef = useRef<HTMLInputElement>(null)
+
   return (
     <div className="space-y-4">
       <TextInput
@@ -42,12 +45,20 @@ export default forwardRef<
         inputMode="tel"
         autoComplete="tel"
         maxLength={20}
-        invalid={invalid}
+        required
+        invalid={phoneInvalid}
         describedBy={describedBy}
         enterKeyHint="next"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            emailRef.current?.focus()
+          }
+        }}
       />
 
       <TextInput
+        ref={emailRef}
         id="qx-email"
         icon="mail"
         label="Email address"
@@ -59,6 +70,8 @@ export default forwardRef<
         inputMode="email"
         autoComplete="email"
         maxLength={254}
+        invalid={emailInvalid}
+        describedBy={emailInvalid ? describedBy : undefined}
         enterKeyHint="go"
       />
     </div>

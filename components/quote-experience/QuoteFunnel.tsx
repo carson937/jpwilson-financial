@@ -87,7 +87,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     }
     // Return to the top of the card; a long step can otherwise leave the next
     // question's heading scrolled out of view on a short viewport.
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }, [])
 
   const handleAnswer = useCallback((id: string, value: string) => {
@@ -142,7 +142,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       // Replace, not push: Back from the success screen must not re-open the
       // contact step and invite a second submission.
       window.history.replaceState({ qxDone: true }, '')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, behavior: 'auto' })
       return
     }
 

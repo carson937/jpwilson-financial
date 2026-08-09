@@ -31,8 +31,8 @@ export default function LifeQuotePage() {
       id="main"
       className="qx-surface flex min-h-[100dvh] items-center justify-center bg-[#FAF8F4] px-4 py-8 sm:px-6 sm:py-12 lg:px-10"
       style={{
-        paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
-        paddingTop: 'calc(2rem + env(safe-area-inset-top))',
+        paddingBottom: 'calc(clamp(1rem, 4vh, 2rem) + env(safe-area-inset-bottom))',
+        paddingTop: 'calc(clamp(1rem, 4vh, 2rem) + env(safe-area-inset-top))',
       }}
     >
       <QuoteEntry />

@@ -1,6 +1,7 @@
 'use client'
 
 import { forwardRef } from 'react'
+import type { KeyboardEvent } from 'react'
 import type { StepIcon } from '@/lib/quote-experience/types'
 import { StepGlyph } from './icons'
 
@@ -29,9 +30,11 @@ type TextInputProps = {
   inputMode?: 'text' | 'numeric' | 'tel' | 'email'
   autoComplete?: string
   maxLength?: number
+  required?: boolean
   invalid?: boolean
   describedBy?: string
   enterKeyHint?: 'next' | 'done' | 'go'
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput(
@@ -48,9 +51,11 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInpu
     inputMode,
     autoComplete,
     maxLength,
+    required = false,
     invalid = false,
     describedBy,
     enterKeyHint = 'next',
+    onKeyDown,
   },
   ref,
 ) {
@@ -91,11 +96,14 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInpu
           autoComplete={autoComplete}
           enterKeyHint={enterKeyHint}
           maxLength={maxLength}
+          required={required}
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           aria-labelledby={label ? undefined : labelledBy}
           aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
           aria-describedby={describedBy}
           /*
             16px minimum: anything smaller makes iOS Safari zoom on focus.

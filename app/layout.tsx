@@ -3,7 +3,6 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import { licensedStateNames } from '@/lib/licensedStates'
 import './globals.css'
 import ScrollRevealInit from '@/components/ScrollRevealInit'
-import Analytics from '@/components/Analytics'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -124,7 +123,6 @@ export default function RootLayout({
           Skip to main content
         </a>
         <ScrollRevealInit />
-        <Analytics />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

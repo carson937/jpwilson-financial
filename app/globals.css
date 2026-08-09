@@ -168,7 +168,7 @@ body {
 @media (max-width: 767.98px) {
   /* Clear the sticky bottom CTA plus the home indicator, so the footer and the
      final form button are never trapped underneath it. */
-  body {
+  body:has(.site-mobile-cta) {
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 

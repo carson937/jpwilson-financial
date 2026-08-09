@@ -10,10 +10,12 @@ import FAQ from '@/components/FAQ'
 import FinalCTA from '@/components/FinalCTA'
 import Footer from '@/components/Footer'
 import MobileCTA from '@/components/MobileCTA'
+import Analytics from '@/components/Analytics'
 
 export default function Home() {
   return (
     <>
+      <Analytics />
       <Nav />
       <main id="main">
         <Hero />

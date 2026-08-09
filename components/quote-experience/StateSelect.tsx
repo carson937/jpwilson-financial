@@ -48,7 +48,9 @@ const StateSelect = forwardRef<
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-labelledby={labelledBy}
+        required
         aria-invalid={invalid || undefined}
+        aria-required="true"
         aria-describedby={describedBy}
         /* Focus is shown on the wrapper — see the note in TextInput. */
         className={`h-[54px] w-full min-w-0 appearance-none border-0 bg-transparent pr-8 text-[16px] outline-none focus-visible:outline-none ${
