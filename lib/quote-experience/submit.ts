@@ -14,7 +14,7 @@ const GENERIC_ERROR =
   'We could not submit your request. Please call Patrick directly at (866) 786-1585.'
 
 export type SubmitResult =
-  | { ok: true; acceptedVia: string }
+  | { ok: true; acceptedVia: string; agencyZoomLeadId?: number }
   | { ok: false; message: string; reason: string }
 
 /**
@@ -44,11 +44,15 @@ export async function submitQuoteLead(
     // The route answers with JSON on every path it controls. A parse failure
     // means a platform-level error page, which must not read as success.
     const data = (await res.json().catch(() => null)) as
-      | { success?: boolean; acceptedVia?: string; error?: string }
+      | { success?: boolean; acceptedVia?: string; agencyZoomLeadId?: number; error?: string }
       | null
 
     if (res.ok && data?.success) {
-      return { ok: true, acceptedVia: data.acceptedVia ?? 'unknown' }
+      return {
+        ok: true,
+        acceptedVia: data.acceptedVia ?? 'unknown',
+        ...(data.agencyZoomLeadId ? { agencyZoomLeadId: data.agencyZoomLeadId } : {}),
+      }
     }
 
     return {

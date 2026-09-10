@@ -11,8 +11,8 @@ import { POST } from '@/app/api/submit-lead/route'
 import { POST as observe } from '@/app/api/auto-events/route'
 
 const answers = { insured: 'yes', state: 'NC', zip: '28205', timing: '30_days', vehicles: '2', driving: 'discuss', fullName: 'Jane Public', phone: '7045550142', email: '', bundle: '', consent: AUTO_CONSENT_VERSION }
-const browser = () => ({ event: 'step_view' as const, eventId: randomUUID(), sessionId: randomUUID(), source: 'direct' as const, step: 'contact' as const, occurredAt: new Date().toISOString() })
-const body = (overrides = {}) => ({ ...autoFunnel.toLead(answers), requestId: randomUUID(), sessionId: randomUUID(), autoSource: 'direct', ...overrides })
+const browser = () => ({ event: 'step_view' as const, eventId: randomUUID(), sessionId: randomUUID(), source: 'direct' as const, funnelId: 'auto' as const, funnelVersion: '1.0.0', step: 'contact' as const, occurredAt: new Date().toISOString() })
+const body = (overrides = {}) => ({ ...autoFunnel.toLead(answers), requestId: randomUUID(), sessionId: randomUUID(), autoSource: 'direct', funnelId: 'auto', funnelVersion: autoFunnel.version, ...overrides })
 const post = (value: unknown) => POST(new NextRequest('http://localhost/api/submit-lead', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': randomUUID() }, body: JSON.stringify(value) }))
 
 describe('Auto V1 and privacy boundaries', () => {

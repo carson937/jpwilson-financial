@@ -98,6 +98,8 @@ export type QuoteProduct = {
   id: string
   /** Bumped when the question set changes. Sent to analytics, never to Jotform. */
   version: string
+  /** Commercial experiment uses a distinct visual treatment on the same engine. */
+  visualVariant?: 'classic' | 'commercial'
   /**
    * The EXACT existing Jotform coverage value. Display copy may differ; this
    * string is a downstream contract and is verified in tests.

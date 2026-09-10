@@ -1,10 +1,10 @@
 import { createHmac } from 'node:crypto'
-import type { AutoTelemetry } from './telemetry'
+import type { FunnelTelemetry } from './telemetry'
 
 /** No raw request, answers or lead object may cross this interface. */
-export async function forwardAutoEvent(event: AutoTelemetry): Promise<boolean> {
-  const secret = process.env.JP_AUTO_TELEMETRY_SECRET
-  const configured = process.env.JP_AUTO_TELEMETRY_URL
+export async function forwardAutoEvent(event: FunnelTelemetry): Promise<boolean> {
+  const secret = process.env.JP_FUNNEL_TELEMETRY_SECRET ?? process.env.JP_AUTO_TELEMETRY_SECRET
+  const configured = process.env.JP_FUNNEL_TELEMETRY_URL ?? process.env.JP_AUTO_TELEMETRY_URL
   if (!secret || !configured) return false
   let url: URL
   try { url = new URL(configured) } catch { return false }

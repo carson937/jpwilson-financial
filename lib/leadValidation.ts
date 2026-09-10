@@ -35,6 +35,26 @@ export type LeadPayload = {
   driving?: string
   bundle?: string
   consent?: string
+  funnelId?: string
+  funnelVersion?: string
+  sessionId?: string
+  trafficSource?: string
+  platform?: string
+  campaignId?: string
+  contentId?: string
+  adId?: string
+  batchId?: string
+  utmSource?: string
+  utmMedium?: string
+  utmCampaign?: string
+  utmContent?: string
+  utmTerm?: string
+  referralSource?: string
+  referralHost?: string
+  businessName?: string
+  coverageNeed?: string
+  industry?: string
+  employeeRange?: string
 }
 
 /**

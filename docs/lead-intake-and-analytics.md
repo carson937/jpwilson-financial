@@ -3,9 +3,11 @@
 ## Current Lead Path
 
 Website forms submit to `/api/submit-lead`, which normalizes and validates the
-payload before submitting to the client's Jotform form (ID in `.env.example` and
-`app/api/submit-lead/route.ts`). A Zapier workflow is the downstream automation path from
-Jotform into the client's CRM. That workflow lives in Zapier, not in this repository.
+payload and maps product funnels into one internal JP lead schema. Auto, Life,
+and the combined General Liability + Workers Comp funnel attempt AgencyZoom
+first. The established Jotform → Zapier intake remains the recoverable downstream
+path when AgencyZoom is disabled or temporarily unavailable. Legacy website
+forms continue through Jotform. See `docs/agencyzoom-integration.md`.
 
 ## Lead Fields And Jotform Mapping
 
@@ -44,9 +46,10 @@ State and Zip carry real submitted values. Address Line 1 and City are mapped in
 workflow to the honest fixed value `Not collected - online lead`, since the forms
 intentionally do not collect street address or city.
 
-The API returns success only when Jotform accepts the submission or when an
-optional configured fallback webhook returns a 2xx response. If neither system
-accepts the lead, the visitor is asked to call Patrick directly.
+The API returns success only after AgencyZoom, the established Jotform intake,
+or an optional configured fallback accepts the submission. AgencyZoom dry-run
+is accepted only outside production. If no system accepts the lead, the visitor
+keeps the form state and is asked to call Patrick directly.
 
 ## Fallback Intake
 

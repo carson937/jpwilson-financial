@@ -6,6 +6,7 @@ import { GET, OPTIONS, POST } from '@/app/api/submit-lead/route'
 let sequence = 0
 
 function validLead(overrides: Record<string, unknown> = {}) {
+  const id = String(++sequence).padStart(12, '0')
   return {
     firstName: 'Jane',
     lastName: 'Public',
@@ -20,7 +21,11 @@ function validLead(overrides: Record<string, unknown> = {}) {
     source: 'Life Quote Funnel',
     product: 'life',
     homeOwnership: 'Own',
-    requestId: `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}`,
+    requestId: `00000000-0000-4000-8000-${id}`,
+    sessionId: `10000000-0000-4000-8000-${id}`,
+    trafficSource: 'direct',
+    funnelId: 'life',
+    funnelVersion: '1.0.0',
     ...overrides,
   }
 }
@@ -40,7 +45,7 @@ function post(body: unknown, options: { contentType?: string; origin?: string; i
 }
 
 async function responseJson(response: Response) {
-  return response.json() as Promise<{ success?: boolean; error?: string }>
+  return response.json() as Promise<{ success?: boolean; error?: string; acceptedVia?: string; agencyZoomLeadId?: number }>
 }
 
 function mockJotform(t: { after: (fn: () => void) => void }, result: Response | Error) {
@@ -149,6 +154,12 @@ describe('submit-lead request boundary', () => {
   it('rejects cross-origin browser requests', async () => {
     const response = await post(validLead(), { origin: 'https://attacker.example' })
     assert.equal(response.status, 403)
+  })
+
+  it('accepts the browser origin that matches the request host', async (t) => {
+    mockJotform(t, new Response('Thank You', { status: 200 }))
+    const response = await post(validLead(), { origin: 'http://localhost:3004' })
+    assert.equal(response.status, 200)
   })
 
   it('suppresses an accepted duplicate request id without a second delivery', async (t) => {

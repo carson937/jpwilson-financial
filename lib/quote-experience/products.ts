@@ -1,6 +1,7 @@
 import type { LeadPayload } from '@/lib/leadValidation'
 import { validateAuto } from './auto'
 import { LICENSED_STATES } from '@/lib/licensedStates'
+import { validateCommercial } from './commercial'
 
 /**
  * ============================================================================
@@ -26,6 +27,7 @@ type RequirableField = Extract<keyof LeadPayload, 'homeOwnership'>
 export const PRODUCT_REQUIRED_ANSWERS: Record<string, ReadonlyArray<RequirableField>> = {
   life: ['homeOwnership'],
   auto: [],
+  commercial: [],
 }
 
 const FIELD_ERRORS: Record<RequirableField, string> = {
@@ -46,6 +48,7 @@ export function validateProductAnswers(lead: LeadPayload): string {
     if (!LICENSED_STATES.some((state) => state === lead.state)) return 'We cannot accept auto requests in this state.'
     return validateAuto(lead, lead.consent)
   }
+  if (product === 'commercial') return validateCommercial(lead)
 
   const required = PRODUCT_REQUIRED_ANSWERS[product]
   if (!required) return 'Unable to accept this request.'

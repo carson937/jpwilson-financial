@@ -17,13 +17,17 @@ import { ArrowRightIcon } from './icons'
 export default function LandingHero({
   intro,
   onStart,
+  variant = 'classic',
 }: {
   intro: QuoteIntro
   onStart: () => void
+  variant?: 'classic' | 'commercial'
 }) {
+  const commercial = variant === 'commercial'
   return (
     <div>
-      <h1 className="font-serif text-[34px] font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-[38px]">
+      {commercial && <p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[#A45B35]">Business coverage check</p>}
+      <h1 className={commercial ? 'font-serif text-[38px] font-bold leading-[1.02] tracking-[-0.025em] text-[#173D3A] sm:text-[48px]' : 'font-serif text-[34px] font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-[38px]'}>
         {intro.headline}
       </h1>
       <p className="mt-3.5 text-[15.5px] leading-relaxed text-navy-900/60">{intro.body}</p>
@@ -35,7 +39,7 @@ export default function LandingHero({
       <button
         type="button"
         onClick={onStart}
-        className="mt-6 inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-xl bg-navy-900 px-7 text-[15.5px] font-semibold text-white transition-all duration-200 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-900/25 active:scale-[0.99]"
+        className={commercial ? 'mt-6 inline-flex h-[58px] w-full items-center justify-center gap-2.5 rounded-full bg-[#A45B35] px-7 text-[15.5px] font-semibold text-white transition hover:bg-[#874629] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A45B35]/25 active:scale-[0.99]' : 'mt-6 inline-flex h-[54px] w-full items-center justify-center gap-2.5 rounded-xl bg-navy-900 px-7 text-[15.5px] font-semibold text-white transition-all duration-200 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-900/25 active:scale-[0.99]'}
       >
         {intro.cta}
         <ArrowRightIcon className="h-[18px] w-[18px]" />

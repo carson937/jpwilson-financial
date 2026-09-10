@@ -15,8 +15,7 @@ import LandingHero from './LandingHero'
 import QuestionStep from './QuestionStep'
 import QuoteShell from './QuoteShell'
 import SuccessScreen from './SuccessScreen'
-import { useAutoTelemetry } from './useAutoTelemetry'
-import type { AutoTelemetry } from '@/lib/quote-experience/telemetry'
+import { useFunnelTelemetry } from './useAutoTelemetry'
 
 /**
  * ============================================================================
@@ -58,7 +57,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   const totalSteps = product.steps.length
   const step = stepIndex >= 0 ? product.steps[stepIndex] : null
-  const { emit, identity } = useAutoTelemetry(product.id === 'auto', step?.id, done)
+  const { emit, identity } = useFunnelTelemetry(product.id as 'auto' | 'life' | 'commercial', product.version, step?.id, done)
   const doneRef = useRef(false)
 
   /**
@@ -132,8 +131,8 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     trackSubmissionAttempted(product)
     emit('submit_attempt', { requestId: requestIdRef.current })
 
-    const lead = { ...product.toLead(answers), website: answers.website ?? '',
-      ...(product.id === 'auto' && identity.current ? { sessionId: identity.current.sessionId, autoSource: identity.current.source } : {}),
+    const lead = { ...product.toLead(answers), website: answers.website ?? '', funnelId: product.id, funnelVersion: product.version,
+      ...(identity.current ? { sessionId: identity.current.sessionId, autoSource: identity.current.source, ...identity.current.attribution } : {}),
     }
     const result = await submitQuoteLead(lead, requestIdRef.current)
 
@@ -145,7 +144,6 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       // The confirmation view has no need for contact details. Release them
       // from component memory as soon as delivery is confirmed.
       setAnswers({})
-      if (product.id !== 'auto') requestIdRef.current = ''
       doneRef.current = true
       setDone(true)
       // Replace, not push: Back from the success screen must not re-open the
@@ -169,7 +167,8 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     }
 
     trackStepCompleted({ product, step, stepNumber: stepIndex + 1 })
-    emit('step_complete', { step: step.id as AutoTelemetry['step'] })
+    emit('step_answer', { step: step.id })
+    if (step.kind === 'contact' || step.kind === 'auto-contact') emit('contact_capture', { step: step.id })
 
     if (stepIndex === totalSteps - 1) {
       void handleSubmit()
@@ -181,7 +180,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   if (done) {
     return (
-      <QuoteShell step={null} totalSteps={totalSteps}>
+      <QuoteShell step={null} totalSteps={totalSteps} variant={product.visualVariant}>
         <SuccessScreen success={product.success} autoRequestId={product.id === 'auto' ? requestIdRef.current : undefined}
           onBookingClick={() => emit('booking_click', { requestId: requestIdRef.current })} />
       </QuoteShell>
@@ -190,14 +189,14 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   if (!step) {
     return (
-      <QuoteShell step={null} totalSteps={totalSteps}>
-        <LandingHero intro={product.intro} onStart={handleStart} />
+      <QuoteShell step={null} totalSteps={totalSteps} variant={product.visualVariant}>
+        <LandingHero intro={product.intro} onStart={handleStart} variant={product.visualVariant} />
       </QuoteShell>
     )
   }
 
   return (
-    <QuoteShell step={stepIndex + 1} totalSteps={totalSteps}>
+    <QuoteShell step={stepIndex + 1} totalSteps={totalSteps} variant={product.visualVariant}>
       <QuestionStep
         step={product.id === 'auto' && step.id === 'timing' && answers.insured === 'yes'
           ? { ...step, question: 'When is your current policy up for renewal?' } : step}
