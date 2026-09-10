@@ -71,7 +71,8 @@ export type ContactStep = StepBase & {
   submitLabel: string
 }
 
-export type QuoteStep = TextStep | StateStep | ZipStep | ChoiceStep | ContactStep
+export type AutoStep = StepBase & { kind: 'location' | 'auto-contact' | 'preferences' }
+export type QuoteStep = TextStep | StateStep | ZipStep | ChoiceStep | ContactStep | AutoStep
 
 export type QuoteIntro = {
   headline: string

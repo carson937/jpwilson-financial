@@ -4,7 +4,10 @@ import {
   isValidUSPhone,
   isValidZip,
   normalizeText,
+  hasNameLetter,
 } from '@/lib/leadValidation'
+import { LICENSED_STATES } from '@/lib/licensedStates'
+import { AUTO_CONSENT_VERSION, validAutoValue } from './auto'
 import type { QuoteAnswers, QuoteStep } from './types'
 
 /**
@@ -28,6 +31,17 @@ function hasNameContent(value: string) {
  */
 export function validateStep(step: QuoteStep, answers: QuoteAnswers): string {
   switch (step.kind) {
+    case 'location':
+      if (!isValidZip(answers.zip ?? '')) return 'Please enter a valid 5-digit ZIP code.'
+      if (!answers.state) return 'Please select your state.'
+      return LICENSED_STATES.some((state) => state === answers.state) ? '' : 'We cannot accept auto requests in this state. No contact details have been sent.'
+    case 'auto-contact':
+      if (!hasNameLetter(answers.fullName ?? '')) return 'Please enter your full name.'
+      return isValidUSPhone(answers.phone ?? '') ? '' : 'Please enter a valid phone number.'
+    case 'preferences':
+      if (!isValidOptionalEmail(answers.email ?? '')) return 'Please enter a valid email address, or leave it blank.'
+      if (!validAutoValue('bundle', answers.bundle ?? '')) return 'Please choose a bundle option or leave it blank.'
+      return answers.consent === AUTO_CONSENT_VERSION ? '' : 'Please agree to contact about your request before submitting.'
     case 'text': {
       const value = normalizeText(answers[step.id] ?? '', 120)
       if (!value) return 'Please enter your name.'

@@ -16,6 +16,10 @@ import {
 import type { LeadPayload } from '@/lib/leadValidation'
 import { composeNotes } from '@/lib/quote-experience/adapter'
 import { validateProductAnswers } from '@/lib/quote-experience/products'
+import { composeAutoNotes, type AutoQualification } from '@/lib/quote-experience/auto'
+import { AUTO_SOURCES, UUID, type AutoSource } from '@/lib/quote-experience/telemetry'
+import { forwardAutoEvent } from '@/lib/quote-experience/telemetry-server'
+import { randomUUID } from 'node:crypto'
 
 const JOTFORM_FORM_ID = '261496542238059'
 const JOTFORM_URL = `https://submit.jotform.com/submit/${JOTFORM_FORM_ID}/`
@@ -60,6 +64,7 @@ const ALLOWED_BODY_FIELDS = new Set([
   'product',
   'homeOwnership',
   'requestId',
+  'insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent', 'sessionId', 'autoSource',
 ])
 
 const FIELD_LIMITS: Record<string, number> = {
@@ -78,6 +83,7 @@ const FIELD_LIMITS: Record<string, number> = {
   product: 40,
   homeOwnership: 10,
   requestId: 64,
+  insured: 10, timing: 20, vehicles: 10, driving: 10, bundle: 10, consent: 40, sessionId: 36, autoSource: 10,
 }
 
 const COVERAGE_LABELS = new Set([
@@ -261,6 +267,7 @@ function isHttpsUrl(value: string | undefined) {
 }
 
 function validateLeadClassification(lead: LeadPayload) {
+  if (lead.product === 'auto' && (lead.coverageLabel !== 'Auto Insurance' || lead.source !== 'Hero Quiz Funnel' || lead.notes || lead.situation || lead.urgency || lead.homeOwnership)) return 'Unable to accept this request.'
   if (!COVERAGE_LABELS.has(lead.coverageLabel)) return 'Unable to accept this request.'
   if (!LEAD_SOURCES.has(lead.source)) return 'Unable to accept this request.'
   if (lead.situation && !SITUATIONS.has(lead.situation)) return 'Unable to accept this request.'
@@ -316,6 +323,11 @@ function normalizeLead(body: Record<string, unknown>): LeadPayload {
     website: normalizeText(body.website, 200),
     product: normalizeText(body.product, 40),
     homeOwnership: normalizeHomeOwnership(body.homeOwnership),
+    ...(body.product === 'auto' ? {
+      insured: normalizeText(body.insured, 10), timing: normalizeText(body.timing, 20),
+      vehicles: normalizeText(body.vehicles, 10), driving: normalizeText(body.driving, 10),
+      bundle: normalizeText(body.bundle, 10), consent: normalizeText(body.consent, 40),
+    } : {}),
   }
 }
 
@@ -399,8 +411,7 @@ async function submitToJotform(lead: LeadPayload) {
     !knownValidationFailure &&
     (res.headers.get('location')?.includes('/thankyou') ||
       text.includes('Thank You') ||
-      text.includes('submissionID') ||
-      text.length > 0)
+      text.includes('submissionID'))
 
   return {
     accepted: likelyAccepted,
@@ -519,6 +530,8 @@ export async function POST(req: NextRequest) {
   if (shapeError) {
     return json({ error: shapeError }, 400)
   }
+  if (body.product !== 'auto' && ['insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent', 'sessionId', 'autoSource'].some((field) => body[field] !== undefined)) return json({ error: 'Invalid request.' }, 400)
+  if (body.product === 'auto' && (typeof body.requestId !== 'string' || !UUID.test(body.requestId) || typeof body.sessionId !== 'string' || !UUID.test(body.sessionId) || !(AUTO_SOURCES as readonly unknown[]).includes(body.autoSource))) return json({ error: 'Invalid request.' }, 400)
 
   if (normalizeText(body.website, 200)) {
     logLeadEvent('warn', 'honeypot_rejected')
@@ -526,8 +539,16 @@ export async function POST(req: NextRequest) {
   }
 
   const lead = normalizeLead(body)
+  const reportOutcome = async (event: 'submission_accepted' | 'submission_failed', acceptedVia?: 'jotform' | 'fallback') => {
+    if (body.product !== 'auto') return
+    await forwardAutoEvent({ eventId: randomUUID(), sessionId: body.sessionId as string,
+      source: body.autoSource as AutoSource, requestId: body.requestId as string,
+      occurredAt: new Date().toISOString(), event, ...(acceptedVia ? { acceptedVia } : {}),
+    })
+  }
   const validationError = publicValidationError(lead)
   if (validationError) {
+    await reportOutcome('submission_failed')
     return json({ error: validationError }, 422)
   }
 
@@ -547,11 +568,15 @@ export async function POST(req: NextRequest) {
       requestId,
       acceptedVia: alreadyAccepted.acceptedVia,
     })
+    await reportOutcome('submission_accepted', alreadyAccepted.acceptedVia as 'jotform' | 'fallback')
     return json({ success: true, acceptedVia: alreadyAccepted.acceptedVia })
   }
 
+  if (lead.product === 'auto') lead.notes = composeAutoNotes(lead as AutoQualification, requestId, new Date().toISOString())
+
   try {
-    const jotform = await submitToJotform(lead)
+    // A transport failure still gets the configured fallback opportunity.
+    const jotform = await submitToJotform(lead).catch(() => ({ accepted: false, status: 0, reason: 'jotform_unavailable' }))
     if (jotform.accepted) {
       logLeadEvent('info', 'accepted_by_jotform', {
         requestId,
@@ -562,6 +587,7 @@ export async function POST(req: NextRequest) {
       })
       rememberSubmission(requestId, 'jotform')
       await notifyLeadAccepted(lead, 'jotform')
+      await reportOutcome('submission_accepted', 'jotform')
       return json({ success: true, acceptedVia: 'jotform' })
     }
 
@@ -584,6 +610,7 @@ export async function POST(req: NextRequest) {
       })
       rememberSubmission(requestId, 'fallback')
       await notifyLeadAccepted(lead, 'fallback')
+      await reportOutcome('submission_accepted', 'fallback')
       return json({ success: true, acceptedVia: 'fallback' })
     }
 
@@ -603,6 +630,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  await reportOutcome('submission_failed')
   return json(
     { error: 'We could not safely accept your request. Please call Patrick directly at (866) 786-1585.' },
     502,

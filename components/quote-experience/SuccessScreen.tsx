@@ -19,8 +19,15 @@ import { CheckIcon, ClockIcon, MailIcon, ShieldIcon, UserIcon } from './icons'
 
 const NEXT_STEP_GLYPHS = [UserIcon, ShieldIcon, ClockIcon]
 
-export default function SuccessScreen({ success }: { success: QuoteSuccess }) {
+export default function SuccessScreen({ success, autoRequestId, onBookingClick }: { success: QuoteSuccess; autoRequestId?: string; onBookingClick?: () => void }) {
   const headingRef = useRef<HTMLHeadingElement>(null)
+  let bookingUrl = ''
+  if (autoRequestId && process.env.NEXT_PUBLIC_AUTO_BOOKING_URL) {
+    try {
+      const url = new URL(process.env.NEXT_PUBLIC_AUTO_BOOKING_URL)
+      if (url.protocol === 'https:') { url.searchParams.set('jp_request_id', autoRequestId); bookingUrl = url.toString() }
+    } catch { /* An invalid booking URL is not a usable call to action. */ }
+  }
 
   /**
    * Move focus to the heading on arrival. Without this a screen-reader user
@@ -63,6 +70,9 @@ export default function SuccessScreen({ success }: { success: QuoteSuccess }) {
           })}
         </ul>
       </div>
+
+      {bookingUrl && <a href={bookingUrl} target="_blank" rel="noreferrer" onClick={onBookingClick}
+        className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center rounded-xl border border-navy-900 px-5 text-base font-semibold text-navy-900">Choose a time with Patrick</a>}
 
       <Link
         href={success.ctaHref}

@@ -30,10 +30,12 @@ function baseParams(product: QuoteProduct) {
 }
 
 export function trackFunnelStarted(product: QuoteProduct) {
+  if (product.id === 'auto') return
   trackEvent('quiz_started', { ...baseParams(product), form: 'quote_experience' })
 }
 
 export function trackStepCompleted({ product, step, stepNumber }: StepContext) {
+  if (product.id === 'auto') return
   trackEvent('quiz_step_completed', {
     ...baseParams(product),
     step: stepNumber,
@@ -42,6 +44,7 @@ export function trackStepCompleted({ product, step, stepNumber }: StepContext) {
 }
 
 export function trackSubmissionAttempted(product: QuoteProduct) {
+  if (product.id === 'auto') return
   trackEvent('form_submission_attempted', {
     ...baseParams(product),
     form: 'quote_experience',
@@ -49,6 +52,7 @@ export function trackSubmissionAttempted(product: QuoteProduct) {
 }
 
 export function trackSubmissionSucceeded(product: QuoteProduct, acceptedVia: string) {
+  if (product.id === 'auto') return
   trackEvent('form_submission_succeeded', {
     ...baseParams(product),
     form: 'quote_experience',
@@ -57,6 +61,7 @@ export function trackSubmissionSucceeded(product: QuoteProduct, acceptedVia: str
 }
 
 export function trackSubmissionFailed(product: QuoteProduct, reason: string) {
+  if (product.id === 'auto') return
   trackEvent('form_submission_failed', {
     ...baseParams(product),
     form: 'quote_experience',

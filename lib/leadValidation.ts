@@ -29,6 +29,12 @@ export type LeadPayload = {
    */
   product?: string
   homeOwnership?: string
+  insured?: string
+  timing?: string
+  vehicles?: string
+  driving?: string
+  bundle?: string
+  consent?: string
 }
 
 /**

@@ -6,6 +6,7 @@ import ChoiceCard from './ChoiceCard'
 import ContactCapture from './ContactCapture'
 import StateSelect from './StateSelect'
 import TextInput from './TextInput'
+import AutoFields from './AutoFields'
 import { ArrowRightIcon } from './icons'
 
 /**
@@ -90,6 +91,9 @@ export default function QuestionStep({
       )}
 
       <div className="mt-7">
+        {(step.kind === 'location' || step.kind === 'auto-contact' || step.kind === 'preferences') && (
+          <AutoFields kind={step.kind} answers={answers} onAnswer={onAnswer} errorId={error ? errorId : undefined} />
+        )}
         {step.kind === 'text' && (
           <TextInput
             ref={firstFieldRef}
@@ -215,7 +219,7 @@ export default function QuestionStep({
             </>
           ) : (
             <>
-              {step.kind === 'contact' ? step.submitLabel : 'Continue'}
+              {step.kind === 'contact' ? step.submitLabel : step.kind === 'preferences' ? 'Send My Request' : 'Continue'}
               <ArrowRightIcon className="h-[18px] w-[18px]" />
             </>
           )}

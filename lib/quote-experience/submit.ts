@@ -6,7 +6,8 @@ import type { LeadPayload } from '@/lib/leadValidation'
  */
 
 const SUBMIT_URL = '/api/submit-lead'
-const CLIENT_TIMEOUT_MS = 20_000
+// Covers bounded primary + fallback + notification + telemetry calls.
+const CLIENT_TIMEOUT_MS = 35_000
 
 /** The message shown when the server gives us nothing usable. */
 const GENERIC_ERROR =

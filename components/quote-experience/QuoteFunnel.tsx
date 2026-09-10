@@ -15,6 +15,8 @@ import LandingHero from './LandingHero'
 import QuestionStep from './QuestionStep'
 import QuoteShell from './QuoteShell'
 import SuccessScreen from './SuccessScreen'
+import { useAutoTelemetry } from './useAutoTelemetry'
+import type { AutoTelemetry } from '@/lib/quote-experience/telemetry'
 
 /**
  * ============================================================================
@@ -56,6 +58,8 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   const totalSteps = product.steps.length
   const step = stepIndex >= 0 ? product.steps[stepIndex] : null
+  const { emit, identity } = useAutoTelemetry(product.id === 'auto', step?.id, done)
+  const doneRef = useRef(false)
 
   /**
    * Browser Back moves one screen back instead of leaving the site.
@@ -69,7 +73,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       const state = event.state as { qxStep?: number } | null
       // Leaving the funnel entirely (or landing on a foreign entry) is handled
       // by the browser; we only reposition when our own state is present.
-      if (typeof state?.qxStep === 'number') {
+      if (!doneRef.current && !inFlightRef.current && typeof state?.qxStep === 'number' && Number.isInteger(state.qxStep) && state.qxStep >= INTRO && state.qxStep < product.steps.length) {
         setStepIndex(state.qxStep)
         setError('')
       }
@@ -77,7 +81,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [])
+  }, [product.steps.length])
 
   const goToStep = useCallback((next: number, push: boolean) => {
     setStepIndex(next)
@@ -99,11 +103,12 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   const handleStart = useCallback(() => {
     trackFunnelStarted(product)
+    emit('funnel_start')
     // Seed a history entry for the intro so the first Back returns here rather
     // than exiting to the previous site.
     window.history.replaceState({ qxStep: INTRO }, '')
     goToStep(0, true)
-  }, [goToStep, product])
+  }, [goToStep, product, emit])
 
   const handleBack = useCallback(() => {
     // Delegate to the browser so the history stack and the UI never disagree.
@@ -125,8 +130,11 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     setSubmitting(true)
     setError('')
     trackSubmissionAttempted(product)
+    emit('submit_attempt', { requestId: requestIdRef.current })
 
-    const lead = { ...product.toLead(answers), website: answers.website ?? '' }
+    const lead = { ...product.toLead(answers), website: answers.website ?? '',
+      ...(product.id === 'auto' && identity.current ? { sessionId: identity.current.sessionId, autoSource: identity.current.source } : {}),
+    }
     const result = await submitQuoteLead(lead, requestIdRef.current)
 
     inFlightRef.current = false
@@ -137,7 +145,8 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       // The confirmation view has no need for contact details. Release them
       // from component memory as soon as delivery is confirmed.
       setAnswers({})
-      requestIdRef.current = ''
+      if (product.id !== 'auto') requestIdRef.current = ''
+      doneRef.current = true
       setDone(true)
       // Replace, not push: Back from the success screen must not re-open the
       // contact step and invite a second submission.
@@ -148,7 +157,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
     trackSubmissionFailed(product, result.reason)
     setError(result.message)
-  }, [answers, product])
+  }, [answers, product, emit, identity])
 
   const handleContinue = useCallback(() => {
     if (!step) return
@@ -160,6 +169,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     }
 
     trackStepCompleted({ product, step, stepNumber: stepIndex + 1 })
+    emit('step_complete', { step: step.id as AutoTelemetry['step'] })
 
     if (stepIndex === totalSteps - 1) {
       void handleSubmit()
@@ -167,12 +177,13 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     }
 
     goToStep(stepIndex + 1, true)
-  }, [answers, goToStep, handleSubmit, product, step, stepIndex, totalSteps])
+  }, [answers, goToStep, handleSubmit, product, step, stepIndex, totalSteps, emit])
 
   if (done) {
     return (
       <QuoteShell step={null} totalSteps={totalSteps}>
-        <SuccessScreen success={product.success} />
+        <SuccessScreen success={product.success} autoRequestId={product.id === 'auto' ? requestIdRef.current : undefined}
+          onBookingClick={() => emit('booking_click', { requestId: requestIdRef.current })} />
       </QuoteShell>
     )
   }
@@ -188,7 +199,8 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
   return (
     <QuoteShell step={stepIndex + 1} totalSteps={totalSteps}>
       <QuestionStep
-        step={step}
+        step={product.id === 'auto' && step.id === 'timing' && answers.insured === 'yes'
+          ? { ...step, question: 'When is your current policy up for renewal?' } : step}
         answers={answers}
         error={error}
         submitting={submitting}
