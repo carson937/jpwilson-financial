@@ -9,11 +9,38 @@
  * browser from reaching arbitrary third-party endpoints. A future nonce rollout
  * must be verified against the optional analytics before removing unsafe-inline.
  */
+/**
+ * `upgrade-insecure-requests` is correct for the deployed HTTPS site, but it
+ * makes Safari/WebKit rewrite every same-origin subresource request (fonts,
+ * images, JS chunks) to `https://`, which fails outright against a plain-HTTP
+ * local server ("A TLS error caused the secure connection to fail" — the page
+ * looks broken because nothing but the initial HTML loads). Chromium does not
+ * enforce this the same way locally, so the break is Safari-specific.
+ *
+ * `LOCAL_PREVIEW_HTTP=1` drops only that one directive for a local `next
+ * start`/`next dev` run. It is never set in the deployed environment, so
+ * production's CSP is byte-for-byte unchanged.
+ */
+const dropHttpsUpgrade = process.env.LOCAL_PREVIEW_HTTP === '1'
+
 const securityHeaders = [
   {
     key: 'Content-Security-Policy',
-    value:
-      "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.facebook.com; img-src 'self' data: https://www.google-analytics.com https://www.facebook.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests",
+    value: [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net",
+      "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.facebook.com",
+      "img-src 'self' data: https://www.google-analytics.com https://www.facebook.com",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "media-src 'self'",
+      "worker-src 'self' blob:",
+      ...(dropHttpsUpgrade ? [] : ['upgrade-insecure-requests']),
+    ].join('; '),
   },
   // Stop MIME sniffing turning a served asset into script.
   { key: 'X-Content-Type-Options', value: 'nosniff' },

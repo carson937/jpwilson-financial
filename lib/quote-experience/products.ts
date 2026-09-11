@@ -1,7 +1,7 @@
 import type { LeadPayload } from '@/lib/leadValidation'
 import { validateAuto } from './auto'
 import { LICENSED_STATES } from '@/lib/licensedStates'
-import { validateCommercial } from './commercial'
+import { validateCommercial, zipToLicensedState } from './commercial'
 
 /**
  * ============================================================================
@@ -48,7 +48,23 @@ export function validateProductAnswers(lead: LeadPayload): string {
     if (!LICENSED_STATES.some((state) => state === lead.state)) return 'We cannot accept auto requests in this state.'
     return validateAuto(lead, lead.consent)
   }
-  if (product === 'commercial') return validateCommercial(lead)
+  if (product === 'commercial') {
+    /**
+     * The funnel derives `state` from the business ZIP (zipToLicensedState) and
+     * refuses to advance out of footprint. Both halves of that gate are
+     * re-applied here, because a direct POST never ran the client validator:
+     * the state must be licensed, AND it must be the state the submitted ZIP
+     * actually falls in — otherwise a crafted payload could pair an
+     * out-of-footprint ZIP with a licensed state code.
+     */
+    if (!LICENSED_STATES.some((state) => state === lead.state)) {
+      return 'We cannot accept business requests in this state.'
+    }
+    if (zipToLicensedState(lead.zip) !== lead.state) {
+      return 'We cannot accept business requests in this state.'
+    }
+    return validateCommercial(lead)
+  }
 
   const required = PRODUCT_REQUIRED_ANSWERS[product]
   if (!required) return 'Unable to accept this request.'

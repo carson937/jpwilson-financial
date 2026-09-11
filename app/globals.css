@@ -218,3 +218,13 @@ select.select-chevron {
 body:has(.qx-surface) {
   background-color: #FAF8F4;
 }
+
+/* Commercial lead request: quiet inputs, readable optional labels, no decorative field glyphs. */
+.commercial-flow input::placeholder { color: #647080; }
+.commercial-flow input + span { color: inherit; }
+.commercial-flow label span { text-wrap: pretty; }
+.commercial-flow label > span.text-navy-900\/40 { color: #526070; }
+.commercial-flow .group > svg { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .commercial-flow *, .commercial-flow *::before, .commercial-flow *::after { transition: none !important; animation: none !important; }
+}

@@ -70,7 +70,7 @@ const ALLOWED_BODY_FIELDS = new Set([
   'insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent', 'sessionId', 'autoSource',
   'funnelId', 'funnelVersion', 'trafficSource', 'platform', 'campaignId', 'contentId', 'adId', 'batchId',
   'utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm', 'referralSource', 'referralHost',
-  'businessName', 'coverageNeed', 'industry', 'employeeRange',
+  'businessName', 'coverageNeed', 'industry', 'employeeRange', 'currentCoverage', 'insuranceStatus', 'claims',
 ])
 
 const FIELD_LIMITS: Record<string, number> = {
@@ -93,7 +93,7 @@ const FIELD_LIMITS: Record<string, number> = {
   funnelId: 40, funnelVersion: 40, trafficSource: 20, platform: 80, campaignId: 160, contentId: 160,
   adId: 160, batchId: 160, utmSource: 160, utmMedium: 160, utmCampaign: 160, utmContent: 160,
   utmTerm: 160, referralSource: 160, referralHost: 160, businessName: 160, coverageNeed: 30,
-  industry: 40, employeeRange: 20,
+  industry: 40, employeeRange: 20, currentCoverage: 20, insuranceStatus: 20, claims: 20,
 }
 
 const COVERAGE_LABELS = new Set([
@@ -358,6 +358,8 @@ function normalizeLead(body: Record<string, unknown>): LeadPayload {
     ...(body.product === 'commercial' ? {
       businessName: normalizeText(body.businessName, 160), coverageNeed: normalizeText(body.coverageNeed, 30),
       industry: normalizeText(body.industry, 40), employeeRange: normalizeText(body.employeeRange, 20),
+      currentCoverage: normalizeText(body.currentCoverage, 20), insuranceStatus: normalizeText(body.insuranceStatus, 20), claims: normalizeText(body.claims, 20),
+      consent: normalizeText(body.consent, 40),
     } : {}),
   }
 }
@@ -561,8 +563,10 @@ export async function POST(req: NextRequest) {
   if (shapeError) {
     return json({ error: shapeError }, 400)
   }
-  if (body.product !== 'auto' && ['insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent'].some((field) => body[field] !== undefined)) return json({ error: 'Invalid request.' }, 400)
-  if (body.product !== 'commercial' && ['businessName', 'coverageNeed', 'industry', 'employeeRange'].some((field) => body[field] !== undefined)) return json({ error: 'Invalid request.' }, 400)
+  if (body.product !== 'auto' && ['insured', 'timing', 'vehicles', 'driving', 'bundle'].some((field) => body[field] !== undefined)) return json({ error: 'Invalid request.' }, 400)
+  if (body.product !== 'commercial' && ['businessName', 'coverageNeed', 'industry', 'employeeRange', 'currentCoverage', 'insuranceStatus', 'claims'].some((field) => body[field] !== undefined)) return json({ error: 'Invalid request.' }, 400)
+  // `consent` is written by both the Auto and the combined commercial funnel.
+  if (body.product !== 'auto' && body.product !== 'commercial' && body.consent !== undefined) return json({ error: 'Invalid request.' }, 400)
   const isProductFunnel = ['auto', 'life', 'commercial'].includes(String(body.product))
   if (isProductFunnel && (typeof body.requestId !== 'string' || !UUID.test(body.requestId) || typeof body.sessionId !== 'string' || !UUID.test(body.sessionId) || !(AUTO_SOURCES as readonly unknown[]).includes(body.trafficSource ?? body.autoSource) || body.funnelId !== body.product || typeof body.funnelVersion !== 'string')) return json({ error: 'Invalid request.' }, 400)
 
@@ -609,7 +613,7 @@ export async function POST(req: NextRequest) {
 
   const submittedAt = new Date().toISOString()
   if (lead.product === 'auto') lead.notes = composeAutoNotes(lead as AutoQualification, requestId, submittedAt)
-  if (lead.product === 'commercial') lead.notes = composeCommercialNotes(lead, requestId)
+  if (lead.product === 'commercial') lead.notes = composeCommercialNotes(lead, requestId, submittedAt)
   const normalizedLead = isProductFunnel ? normalizeJPLead(lead, requestId, submittedAt) : null
 
   try {

@@ -53,7 +53,7 @@ function request(body: Record<string, unknown>, ip: string) {
 
 const autoAnswers = { insured: 'yes', state: 'NC', zip: '28205', timing: '30_days', vehicles: '2', driving: 'none', fullName: 'Jane Public', phone: '7045550142', email: 'jane@example.test', bundle: 'home', consent: 'auto-contact-v1' }
 const lifeAnswers = { fullName: 'Jane Public', state: 'NC', zip: '28205', homeOwnership: 'Own', phone: '7045550142', email: 'jane@example.test' }
-const commercialAnswers = { coverageNeed: 'both', industry: 'contractor', employeeRange: '5', businessName: 'Acme Builders', state: 'NC', zip: '28205', fullName: 'Jane Public', phone: '7045550142', email: 'jane@example.test' }
+const commercialAnswers = { industry: 'contractor', coverageNeed: 'both', zip: '28205', state: 'NC', employeeRange: '5', currentCoverage: 'soon', claims: 'none', businessName: 'Acme Builders', fullName: 'Jane Public', phone: '7045550142', email: 'jane@example.test', consent: 'commercial-contact-v1' }
 
 describe('AgencyZoom-first route proof', () => {
   it('safely accepts Auto, Life, and combined commercial payloads without a network call', async (t) => {
@@ -114,5 +114,55 @@ describe('AgencyZoom-first route proof', () => {
     assert.ok(urls.some((url) => url.includes('/v1/api/leads/create')))
     assert.ok(urls.some((url) => url.includes('submit.jotform.com')))
     assert.match(new URLSearchParams(fallbackBody).get('q8_q8_textarea6') ?? '', /Auto Quote Funnel v1/)
+  })
+})
+
+
+describe('commercial v3 minimal API boundary', () => {
+  it('accepts every branch without company/claims and preserves AgencyZoom ID, attribution and consent', async (t) => {
+    configureAgencyZoom(t, 'live')
+    const originalFetch = globalThis.fetch
+    const payloads: Record<string, unknown>[] = []
+    globalThis.fetch = async (input, init) => {
+      assert.equal(String(input), 'https://api.agencyzoom.com/v1/api/leads/create-biz-lead')
+      payloads.push(JSON.parse(String(init?.body)))
+      return Response.json({ result: true, id: 9911 })
+    }
+    t.after(() => { globalThis.fetch = originalFetch })
+    for (const [index, coverageNeed] of ['general_liability', 'workers_comp', 'both', 'unsure'].map((coverage, index) => [index, coverage] as const)) {
+      const answers = { industry: 'cleaning', coverageNeed, zip: '28205', state: 'NC', employeeRange: '0', currentCoverage: 'job', insuranceStatus: 'insured', claims: 'none', fullName: 'Jane Public', phone: '7045550142', email: 'jane@example.test', consent: 'commercial-contact-v1' }
+      const body = { ...commercialFunnel.toLead(answers), ...identity('commercial'), funnelVersion: commercialFunnel.version }
+      const first = await request(body, `198.51.100.${120 + index}`)
+      assert.deepEqual(await first.json(), { success: true, acceptedVia: 'agencyzoom', agencyZoomLeadId: 9911 })
+      const repeat = await request(body, `198.51.100.${120 + index}`)
+      assert.equal((await repeat.json()).agencyZoomLeadId, 9911)
+    }
+    assert.equal(payloads.length, 4)
+    for (const payload of payloads) {
+      assert.ok(!payload.name)
+      assert.match(String(payload.notes), /commercial-contact-v1/)
+      assert.match(String(payload.notes), /campaign-1/)
+      assert.match(String(payload.notes), /5.0.0/)
+      assert.match(String(payload.notes), /Not collected/)
+    }
+  })
+})
+
+
+describe('commercial v5 new question boundary', () => {
+  it('requires current insurance status and coarse claims on v5, before any delivery', async (t) => {
+    configureAgencyZoom(t, 'dry-run')
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async () => { throw new Error('No external delivery in this test') }
+    t.after(() => { globalThis.fetch = originalFetch })
+    const body = { ...commercialFunnel.toLead({ ...commercialAnswers, insuranceStatus: 'insured', claims: 'open' }), ...identity('commercial'), funnelVersion: '5.0.0' }
+    for (const [index, field] of ['insuranceStatus', 'claims'].map((field, index) => [index, field] as const)) {
+      const incomplete: Record<string, unknown> = { ...body }
+      delete incomplete[field]
+      assert.equal((await request(incomplete, `198.51.100.${150 + index}`)).status, 422)
+    }
+    assert.equal((await request({ ...body, insuranceStatus: 'fabricated' }, '198.51.100.152')).status, 422)
+    assert.equal((await request({ ...body, claims: 'detailed free text' }, '198.51.100.153')).status, 422)
+    assert.equal((await request(body, '198.51.100.154')).status, 200)
   })
 })

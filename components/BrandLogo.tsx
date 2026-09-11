@@ -85,6 +85,65 @@ export default function BrandLockup({
   return <span className={`inline-flex items-center ${className}`}>{image}</span>
 }
 
+/**
+ * Crest + typographic wordmark.
+ *
+ * The supplied horizontal lockup is a 1231×373 raster whose "FINANCIAL GROUP"
+ * rule sits at roughly 5% of the artwork height. Rendered at the 25–30px
+ * heights the commercial flow needs, that line lands under 2px and the whole
+ * mark reads as a smudge. Rather than crop, redraw, or upscale the artwork,
+ * this pairs the crest tile — which is square, holds detail at small sizes, and
+ * is used at well under its 756px native resolution — with the wordmark set in
+ * the brand serif. Nothing about the supplied artwork is altered.
+ *
+ * Sizes derive from `size` (the crest edge) so the mark stays in proportion at
+ * every call site.
+ */
+export function BrandMark({
+  size = 40,
+  className = '',
+}: {
+  size?: number
+  className?: string
+}) {
+  const nameSize = Math.round(size * 0.42)
+  const subSize = Math.max(8, Math.round(size * 0.195))
+
+  return (
+    <span className={`inline-flex items-center ${className}`}>
+      <BrandCrest size={size} />
+      <span
+        aria-hidden="true"
+        className="bg-navy-950/15"
+        style={{
+          width: 1,
+          height: Math.round(size * 0.66),
+          marginLeft: Math.round(size * 0.28),
+          marginRight: Math.round(size * 0.28),
+        }}
+      />
+      <span className="flex flex-col justify-center">
+        <span
+          className="font-serif font-semibold uppercase leading-none text-navy-950"
+          style={{ fontSize: nameSize, letterSpacing: '0.035em' }}
+        >
+          J.P. Wilson
+        </span>
+        <span
+          className="font-sans font-semibold uppercase leading-none text-gold-dark"
+          style={{
+            fontSize: subSize,
+            letterSpacing: '0.22em',
+            marginTop: Math.round(size * 0.145),
+          }}
+        >
+          Financial Group
+        </span>
+      </span>
+    </span>
+  )
+}
+
 /** Intrinsic pixel dimensions of public/brand/jpw-crest-tile.png. */
 const TILE_W = 756
 const TILE_H = 760

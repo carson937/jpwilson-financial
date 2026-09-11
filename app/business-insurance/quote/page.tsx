@@ -8,6 +8,12 @@ export const metadata: Metadata = {
 }
 
 export default function BusinessInsuranceQuotePage() {
-  return <main className="qx-surface flex min-h-dvh items-center justify-center bg-[#173D3A] px-4 py-8 sm:px-6"><QuoteEntry /></main>
+  // The commercial shell/hero own their full-bleed navy-band + bone editorial
+  // layout, so the page wrapper stays out of the way.
+  return (
+    <main id="main" className="qx-surface bg-bone">
+      <QuoteEntry />
+    </main>
+  )
 }
 

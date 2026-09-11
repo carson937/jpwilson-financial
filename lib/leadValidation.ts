@@ -55,6 +55,9 @@ export type LeadPayload = {
   coverageNeed?: string
   industry?: string
   employeeRange?: string
+  currentCoverage?: string
+  claims?: string
+  insuranceStatus?: string
 }
 
 /**

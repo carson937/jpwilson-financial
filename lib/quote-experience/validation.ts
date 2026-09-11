@@ -8,6 +8,7 @@ import {
 } from '@/lib/leadValidation'
 import { LICENSED_STATES } from '@/lib/licensedStates'
 import { AUTO_CONSENT_VERSION, validAutoValue } from './auto'
+import { CONSENT_REQUIRED_MESSAGE, zipToLicensedState } from './commercial'
 import type { QuoteAnswers, QuoteStep } from './types'
 
 /**
@@ -25,11 +26,19 @@ function hasNameContent(value: string) {
 }
 
 /**
+ * Sentinel returned by the `zip-state` step when the ZIP is valid but outside
+ * the licensed footprint. The commercial renderer swaps it for a dedicated
+ * "we can't help here" panel; anywhere else it simply blocks the step.
+ */
+export const OUT_OF_AREA = 'out-of-area'
+
+/**
  * Returns a visitor-facing error for the step, or '' when the step may advance.
  * The contact step validates both of its inputs; phone required, email only
  * when the visitor actually typed one.
  */
 export function validateStep(step: QuoteStep, answers: QuoteAnswers): string {
+  if (step.visibleWhen && !step.visibleWhen(answers)) return ''
   switch (step.kind) {
     case 'location':
       if (!isValidZip(answers.zip ?? '')) return 'Please enter a valid 5-digit ZIP code.'
@@ -62,6 +71,28 @@ export function validateStep(step: QuoteStep, answers: QuoteAnswers): string {
       if (!isValidZip(value)) return 'Please enter a valid 5-digit ZIP code.'
       return ''
     }
+
+    case 'zip-state': {
+      const zip = answers.zip ?? ''
+      if (!zip) return 'Please enter the business ZIP code.'
+      if (!isValidZip(zip)) return 'Please enter a valid 5-digit ZIP code.'
+      // The gate: a ZIP outside NC/SC/GA/TN is turned away here. No lead is
+      // built and no contact details exist yet.
+      return zipToLicensedState(zip) ? '' : OUT_OF_AREA
+    }
+
+    case 'business-contact': {
+      if (!hasNameLetter(answers.fullName ?? '')) return 'Please enter your name.'
+      if (!answers.phone) return 'Please enter a phone number.'
+      if (!isValidUSPhone(answers.phone)) return 'Please enter a valid phone number.'
+      if (answers.email && !isValidOptionalEmail(answers.email)) {
+        return 'Please enter a valid email address, or leave it blank.'
+      }
+      return answers.consent === step.consentVersion ? '' : CONSENT_REQUIRED_MESSAGE
+    }
+
+    case 'recap':
+      return answers.consent === step.consentVersion ? '' : CONSENT_REQUIRED_MESSAGE
 
     case 'choice': {
       const value = answers[step.id] ?? ''

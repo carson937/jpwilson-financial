@@ -8,7 +8,7 @@ export const AUTO_STEPS = ['insured', 'location', 'timing', 'vehicles', 'driving
 const FUNNEL_STEPS: Record<(typeof FUNNEL_IDS)[number], readonly string[]> = {
   auto: AUTO_STEPS,
   life: ['fullName', 'state', 'zip', 'homeOwnership', 'contact'],
-  commercial: ['coverageNeed', 'industry', 'employeeRange', 'businessName', 'state', 'zip', 'fullName', 'contact'],
+  commercial: ['industry', 'coverageNeed', 'zip', 'employeeRange', 'currentCoverage', 'insuranceStatus', 'claims', 'businessName', 'contact', 'recap'],
 }
 export type FunnelEvent = (typeof FUNNEL_BROWSER_EVENTS)[number] | (typeof FUNNEL_SERVER_EVENTS)[number]
 export type TrafficSource = (typeof TRAFFIC_SOURCES)[number]

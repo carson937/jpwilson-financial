@@ -54,11 +54,11 @@ export function normalizeJPLead(lead: LeadPayload, leadId: string, submittedAt: 
 
   const funnelAnswers: Record<string, string> = {}
   const qualificationData: Record<string, string> = {}
-  for (const key of ['insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent', 'homeOwnership', 'coverageNeed', 'industry', 'employeeRange'] as const) {
+  for (const key of ['insured', 'timing', 'vehicles', 'driving', 'bundle', 'consent', 'homeOwnership', 'coverageNeed', 'industry', 'employeeRange', 'currentCoverage', 'insuranceStatus', 'claims'] as const) {
     const value = clean(lead[key])
     if (value) funnelAnswers[key] = value
   }
-  for (const key of ['businessName', 'coverageNeed', 'industry', 'employeeRange'] as const) {
+  for (const key of ['businessName', 'coverageNeed', 'industry', 'employeeRange', 'currentCoverage', 'insuranceStatus', 'claims'] as const) {
     const value = clean(lead[key])
     if (value) qualificationData[key] = value
   }

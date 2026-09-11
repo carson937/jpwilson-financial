@@ -27,6 +27,7 @@ export type QuoteAnswers = Record<string, string>
 export type StepIcon = 'user' | 'pin' | 'card' | 'home' | 'building' | 'phone' | 'mail'
 
 type StepBase = {
+  visibleWhen?: (answers: QuoteAnswers) => boolean
   /** Stable key. Also the analytics step name — never include PII in it. */
   id: string
   /** The visible question. One question per screen. */
@@ -55,9 +56,36 @@ export type ZipStep = StepBase & {
   icon: StepIcon
 }
 
+/**
+ * A single choice option. `icon` is optional: the classic ChoiceCard renders a
+ * centred glyph, but the commercial business tiles are deliberately typographic
+ * and pass no icon. `hint` is a one-line descriptor under the label; `emphasis`
+ * promotes an option to a full-width lead tile (used for "both coverages").
+ */
+export type ChoiceOption = {
+  value: string
+  label: string
+  icon?: StepIcon
+  hint?: string
+  emphasis?: boolean
+}
+
 export type ChoiceStep = StepBase & {
   kind: 'choice'
-  options: ReadonlyArray<{ value: string; label: string; icon: StepIcon }>
+  options: ReadonlyArray<ChoiceOption>
+}
+
+/**
+ * A ZIP field that derives the state and gates on the licensed footprint. One
+ * screen replaces the old ZIP + state pair: the business ZIP is enough to place
+ * the lead and to turn away anything outside NC/SC/GA/TN before contact.
+ */
+export type ZipStateStep = StepBase & {
+  kind: 'zip-state'
+  placeholder: string
+  icon?: StepIcon
+  outOfAreaTitle: string
+  outOfAreaBody: string
 }
 
 /**
@@ -71,16 +99,63 @@ export type ContactStep = StepBase & {
   submitLabel: string
 }
 
+/**
+ * "How should we reach you?" for the commercial funnel: full name, phone, and
+ * optional email on one screen. Consent is NOT here — it sits on the recap
+ * screen with the send action, so the visitor sees exactly what they are
+ * agreeing to.
+ */
+export type BusinessContactStep = StepBase & {
+  kind: 'business-contact'
+  submitLabel: string
+  consentText: string
+  consentVersion: string
+  privacyHref: string
+  summarize: (answers: QuoteAnswers) => ReadonlyArray<RecapRow>
+}
+
+export type RecapRow = { label: string; value: string; stepId: string }
+
+/**
+ * The review-and-consent screen. Not a numbered question. Shows the answers as
+ * editable rows, carries the consent language next to the send button, and is
+ * always the last step.
+ */
+export type RecapStep = StepBase & {
+  kind: 'recap'
+  submitLabel: string
+  consentText: string
+  /** Version string written to `answers.consent` and recorded with the lead. */
+  consentVersion: string
+  privacyHref?: string
+  /** Builds the editable summary rows from the collected answers. */
+  summarize: (answers: QuoteAnswers) => ReadonlyArray<RecapRow>
+}
+
 export type AutoStep = StepBase & { kind: 'location' | 'auto-contact' | 'preferences' }
-export type QuoteStep = TextStep | StateStep | ZipStep | ChoiceStep | ContactStep | AutoStep
+
+export type QuoteStep =
+  | TextStep
+  | StateStep
+  | ZipStep
+  | ZipStateStep
+  | ChoiceStep
+  | ContactStep
+  | BusinessContactStep
+  | RecapStep
+  | AutoStep
 
 export type QuoteIntro = {
+  /** Small uppercase kicker above the headline. Optional. */
+  eyebrow?: string
   headline: string
   /** Rendered as one paragraph under the headline. */
   body: string
   /** Reassurance rows. Claims must be literally true — see AGENTS.md. */
   assurances: ReadonlyArray<string>
   cta: string
+  /** Optional "or call" phone number shown as an escape hatch. */
+  phone?: string
 }
 
 export type QuoteSuccess = {
@@ -98,8 +173,15 @@ export type QuoteProduct = {
   id: string
   /** Bumped when the question set changes. Sent to analytics, never to Jotform. */
   version: string
-  /** Commercial experiment uses a distinct visual treatment on the same engine. */
+  /** The commercial funnel uses a distinct editorial treatment on the same engine. */
   visualVariant?: 'classic' | 'commercial'
+  /**
+   * When true, a single-select choice advances on its own a short beat after a
+   * fresh pointer selection. Never fires on a revisited step or for keyboard /
+   * screen-reader input — see QuestionStep.
+   */
+  autoAdvanceChoices?: boolean
+  startAtFirstStep?: boolean
   /**
    * The EXACT existing Jotform coverage value. Display copy may differ; this
    * string is a downstream contract and is verified in tests.
@@ -110,6 +192,12 @@ export type QuoteProduct = {
   intro: QuoteIntro
   steps: ReadonlyArray<QuoteStep>
   success: QuoteSuccess
+  /**
+   * Optional per-render step rewrite, given the answers so far. Used for light
+   * copy personalisation (e.g. the trade the visitor picked). Pure; must return
+   * a step of the same kind and id.
+   */
+  adaptStep?: (step: QuoteStep, answers: QuoteAnswers) => QuoteStep
   /**
    * Converts validated answers into the existing lead payload. Pure, and unit
    * tested per product — this is the seam where a funnel meets the proven

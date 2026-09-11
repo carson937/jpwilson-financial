@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type { QuoteAnswers, QuoteStep } from '@/lib/quote-experience/types'
 import ChoiceCard from './ChoiceCard'
+import CommercialStep from './CommercialStep'
 import ContactCapture from './ContactCapture'
 import StateSelect from './StateSelect'
 import TextInput from './TextInput'
@@ -15,8 +16,71 @@ import { ArrowRightIcon } from './icons'
  *
  * The whole screen is a <form>, so Enter submits on every step — on mobile that
  * is the keyboard's Go/Next key, which is how people actually advance.
+ *
+ * The commercial funnel's steps (business tiles, ZIP-derives-state, the
+ * "how should we reach you?" screen, and the recap/consent screen) render
+ * through CommercialStep — a separate component so the classic auto/life path
+ * here stays exactly as it was.
  */
 export default function QuestionStep({
+  step,
+  answers,
+  error,
+  submitting,
+  canGoBack,
+  variant = 'classic',
+  autoAdvanceChoices = false,
+  onAnswer,
+  onChoiceSelect,
+  onEditStep,
+  onBack,
+  onContinue,
+}: {
+  step: QuoteStep
+  answers: QuoteAnswers
+  error: string
+  submitting: boolean
+  canGoBack: boolean
+  variant?: 'classic' | 'commercial'
+  autoAdvanceChoices?: boolean
+  onAnswer: (id: string, value: string) => void
+  onChoiceSelect?: (id: string, value: string, fromPointer: boolean) => void
+  onEditStep?: (stepId: string) => void
+  onBack: () => void
+  onContinue: () => void
+}) {
+  if (variant === 'commercial') {
+    return (
+      <CommercialStep
+        step={step}
+        answers={answers}
+        error={error}
+        submitting={submitting}
+        canGoBack={canGoBack}
+        autoAdvanceChoices={autoAdvanceChoices}
+        onAnswer={onAnswer}
+        onChoiceSelect={onChoiceSelect}
+        onEditStep={onEditStep}
+        onBack={onBack}
+        onContinue={onContinue}
+      />
+    )
+  }
+  return (
+    <ClassicQuestionStep
+      step={step}
+      answers={answers}
+      error={error}
+      submitting={submitting}
+      canGoBack={canGoBack}
+      onAnswer={onAnswer}
+      onBack={onBack}
+      onContinue={onContinue}
+    />
+  )
+}
+
+function ClassicQuestionStep({
   step,
   answers,
   error,
@@ -158,7 +222,7 @@ export default function QuestionStep({
                 name={step.id}
                 value={option.value}
                 label={option.label}
-                icon={option.icon}
+                icon={option.icon ?? 'card'}
                 selected={answers[step.id] === option.value}
                 onSelect={(value) => onAnswer(step.id, value)}
               />
