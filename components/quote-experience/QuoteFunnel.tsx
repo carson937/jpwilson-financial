@@ -196,9 +196,10 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
   const handleBack = useCallback(() => {
     clearAutoAdvance()
+    if (step) emit('step_back', { step: step.id })
     // Delegate to the browser so the history stack and the UI never disagree.
     window.history.back()
-  }, [clearAutoAdvance])
+  }, [clearAutoAdvance, emit, step])
 
   const handleSubmit = useCallback(async () => {
     if (inFlightRef.current) return
@@ -206,6 +207,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     const validationError = validateAllSteps(product.steps, answers)
     if (validationError) {
       setError(validationError)
+      if (step) emit('validation_error', { step: step.id })
       return
     }
 
@@ -242,7 +244,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
     trackSubmissionFailed(product, result.reason)
     setError(result.message)
-  }, [answers, product, emit, identity])
+  }, [answers, product, emit, identity, step])
 
   const handleContinue = useCallback(() => {
     if (!step) return
@@ -251,6 +253,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     const stepError = validateStep(step, answers)
     if (stepError) {
       setError(stepError)
+      emit('validation_error', { step: step.id })
       return
     }
 
