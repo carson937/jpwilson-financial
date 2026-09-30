@@ -3,7 +3,6 @@
 import LeadCapture from './LeadCapture'
 import { LICENSED_STATES } from '@/lib/licensedStates'
 import { BrandCrest } from './BrandLogo'
-import { trackEvent } from '@/lib/analytics'
 
 export default function Hero() {
   return (
@@ -69,7 +68,7 @@ export default function Hero() {
           {/* Phone */}
           <a
             href="tel:+18667861585"
-            onClick={() => trackEvent('phone_cta_clicked', { location: 'hero' })}
+            data-track-location="hero"
             className="inline-flex min-h-11 items-center gap-2 text-navy-900/65 hover:text-navy-900/90 text-sm transition-colors duration-300 mb-8 md:mb-14 group"
           >
             <svg className="w-3.5 h-3.5 flex-shrink-0 text-gold/60 group-hover:text-gold transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

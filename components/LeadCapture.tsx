@@ -406,7 +406,7 @@ export default function LeadCapture() {
               )}
               <a
                 href="tel:+18667861585"
-                onClick={() => trackEvent('phone_cta_clicked', { location: 'hero_thank_you' })}
+                data-track-location="hero_thank_you"
                 className="inline-flex min-h-11 items-center gap-2 text-gold font-semibold text-sm hover:text-gold-dark transition-colors"
               >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
