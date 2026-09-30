@@ -1,0 +1,158 @@
+{
+  "client_id": "jp-wilson",
+  "site_id": "main",
+  "domains": [
+    "jpwilsonfinancial.com"
+  ],
+  "ga_measurement_id": "G-837LY8SGTM",
+  "vercel_analytics": true,
+  "ingest_endpoint": "https://caps-analytics.vercel.app/api/t",
+  "funnels": [
+    {
+      "id": "auto",
+      "version": "1.0.0",
+      "label": "Auto Insurance",
+      "paths": [
+        "/auto-insurance"
+      ],
+      "steps": [
+        {
+          "id": "insured",
+          "label": "Insured"
+        },
+        {
+          "id": "location",
+          "label": "Location"
+        },
+        {
+          "id": "timing",
+          "label": "Timing"
+        },
+        {
+          "id": "vehicles",
+          "label": "Vehicles"
+        },
+        {
+          "id": "driving",
+          "label": "Driving"
+        },
+        {
+          "id": "contact",
+          "label": "Contact"
+        },
+        {
+          "id": "preferences",
+          "label": "Preferences"
+        }
+      ]
+    },
+    {
+      "id": "life",
+      "version": "1.0.0",
+      "label": "Life Insurance",
+      "paths": [
+        "/life-insurance"
+      ],
+      "steps": [
+        {
+          "id": "fullName",
+          "label": "Name"
+        },
+        {
+          "id": "state",
+          "label": "State"
+        },
+        {
+          "id": "zip",
+          "label": "ZIP"
+        },
+        {
+          "id": "homeOwnership",
+          "label": "Home ownership"
+        },
+        {
+          "id": "contact",
+          "label": "Contact"
+        }
+      ]
+    },
+    {
+      "id": "commercial",
+      "version": "5.0.0",
+      "label": "Business Insurance",
+      "paths": [
+        "/business-insurance"
+      ],
+      "steps": [
+        {
+          "id": "industry",
+          "label": "Industry"
+        },
+        {
+          "id": "zip",
+          "label": "ZIP"
+        },
+        {
+          "id": "employeeRange",
+          "label": "Employees"
+        },
+        {
+          "id": "currentCoverage",
+          "label": "Current coverage"
+        },
+        {
+          "id": "insuranceStatus",
+          "label": "Insurance status"
+        },
+        {
+          "id": "claims",
+          "label": "Claims"
+        },
+        {
+          "id": "contact",
+          "label": "Contact"
+        }
+      ]
+    },
+    {
+      "id": "home-quiz",
+      "version": "1.0.0",
+      "label": "Homepage quiz",
+      "paths": [
+        "/"
+      ],
+      "steps": [
+        {
+          "id": "coverage",
+          "label": "Coverage"
+        },
+        {
+          "id": "situation",
+          "label": "Situation"
+        },
+        {
+          "id": "urgency",
+          "label": "Urgency"
+        },
+        {
+          "id": "contact",
+          "label": "Contact"
+        }
+      ]
+    },
+    {
+      "id": "bottom-form",
+      "version": "1.0.0",
+      "label": "Homepage contact form",
+      "paths": [
+        "/#contact"
+      ],
+      "steps": [
+        {
+          "id": "form",
+          "label": "Form"
+        }
+      ]
+    }
+  ]
+}

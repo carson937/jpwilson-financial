@@ -21,6 +21,19 @@
  * start`/`next dev` run. It is never set in the deployed environment, so
  * production's CSP is byte-for-byte unchanged.
  */
+import { readFileSync } from 'node:fs'
+
+/** Origin of the central CAPS ingestion API; the browser SDK beacons here, so CSP connect-src must allow it. */
+function capsIngestOrigin() {
+  try {
+    const cfg = JSON.parse(readFileSync(new URL('./lib/caps-tracking/jp-wilson.json', import.meta.url), 'utf8'))
+    return new URL(process.env.NEXT_PUBLIC_CAPS_INGEST_URL || cfg.ingest_endpoint).origin
+  } catch {
+    return ''
+  }
+}
+const capsOrigin = capsIngestOrigin()
+
 const dropHttpsUpgrade = process.env.LOCAL_PREVIEW_HTTP === '1'
 
 const securityHeaders = [
@@ -33,7 +46,7 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net",
-      "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com",
+      `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com${capsOrigin ? ' ' + capsOrigin : ''}`,
       "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.facebook.com",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",

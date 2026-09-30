@@ -4,13 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { isValidZip } from '@/lib/leadValidation'
 import { zipToLicensedState } from '@/lib/quote-experience/commercial'
 import { createRequestId, submitQuoteLead } from '@/lib/quote-experience/submit'
-import {
-  trackFunnelStarted,
-  trackStepCompleted,
-  trackSubmissionAttempted,
-  trackSubmissionFailed,
-  trackSubmissionSucceeded,
-} from '@/lib/quote-experience/tracking'
 import type { QuoteAnswers, QuoteProduct, QuoteStep } from '@/lib/quote-experience/types'
 import { validateAllSteps, validateStep } from '@/lib/quote-experience/validation'
 import LandingHero from './LandingHero'
@@ -82,7 +75,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
   const totalSteps = product.steps.length
   const rawStep = stepIndex >= 0 ? product.steps[stepIndex] : null
   const step = rawStep ? adaptStep(product, rawStep, answers) : null
-  const { emit, identity } = useFunnelTelemetry(product.id as 'auto' | 'life' | 'commercial', product.version, step?.id, done)
+  const { emit, settle, identity } = useFunnelTelemetry(product.id as 'auto' | 'life' | 'commercial', product.version, step?.id, done)
   const doneRef = useRef(false)
 
   /** Progress: the recap/consent screen is not a numbered step. */
@@ -152,7 +145,6 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
   const handleAnswer = useCallback((id: string, value: string) => {
     if (product.startAtFirstStep && !startedRef.current) {
       startedRef.current = true
-      trackFunnelStarted(product)
       emit('funnel_start')
     }
     setAnswers((current) => {
@@ -186,13 +178,12 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
   }, [handleAnswer, product.autoAdvanceChoices, clearAutoAdvance])
 
   const handleStart = useCallback(() => {
-    trackFunnelStarted(product)
     emit('funnel_start')
     // Seed a history entry for the intro so the first Back returns here rather
     // than exiting to the previous site.
     window.history.replaceState({ ...window.history.state, qxStep: INTRO }, '')
     goToStep(0, true)
-  }, [goToStep, product, emit])
+  }, [goToStep, emit])
 
   const handleBack = useCallback(() => {
     clearAutoAdvance()
@@ -216,7 +207,6 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
     inFlightRef.current = true
     setSubmitting(true)
     setError('')
-    trackSubmissionAttempted(product)
     emit('submit_attempt', { requestId: requestIdRef.current })
 
     const lead = { ...product.toLead(answers), website: answers.website ?? '', funnelId: product.id, funnelVersion: product.version,
@@ -229,7 +219,7 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
 
     if (result.ok) {
       setDryRun(result.acceptedVia === 'agencyzoom_dry_run')
-      trackSubmissionSucceeded(product, result.acceptedVia)
+      settle(true)
       // The confirmation view has no need for contact details. Release them
       // from component memory as soon as delivery is confirmed.
       setAnswers({})
@@ -242,9 +232,9 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       return
     }
 
-    trackSubmissionFailed(product, result.reason)
+    settle(false, result.reason)
     setError(result.message)
-  }, [answers, product, emit, identity, step])
+  }, [answers, product, emit, identity, step, settle])
 
   const handleContinue = useCallback(() => {
     if (!step) return
@@ -257,7 +247,6 @@ export default function QuoteFunnel({ product }: { product: QuoteProduct }) {
       return
     }
 
-    trackStepCompleted({ product, step, stepNumber: stepIndex + 1 })
     emit('step_answer', { step: step.id })
     if (step.kind === 'contact' || step.kind === 'auto-contact' || step.kind === 'business-contact') {
       emit('contact_capture', { step: step.id })

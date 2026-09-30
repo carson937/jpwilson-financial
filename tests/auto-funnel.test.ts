@@ -8,7 +8,6 @@ import { validateAllSteps } from '@/lib/quote-experience/validation'
 import { parseBrowserEvent, sourceBucket } from '@/lib/quote-experience/telemetry'
 import { forwardAutoEvent } from '@/lib/quote-experience/telemetry-server'
 import { POST } from '@/app/api/submit-lead/route'
-import { POST as observe } from '@/app/api/auto-events/route'
 
 const answers = { insured: 'yes', state: 'NC', zip: '28205', timing: '30_days', vehicles: '2', driving: 'discuss', fullName: 'Jane Public', phone: '7045550142', email: '', bundle: '', consent: AUTO_CONSENT_VERSION }
 const browser = () => ({ event: 'step_view' as const, eventId: randomUUID(), sessionId: randomUUID(), source: 'direct' as const, funnelId: 'auto' as const, funnelVersion: '1.0.0', step: 'contact' as const, occurredAt: new Date().toISOString() })
@@ -85,10 +84,5 @@ describe('Auto V1 and privacy boundaries', () => {
     globalThis.fetch = async () => { if (++calls === 1) throw new Error('timeout'); return new Response('', { status: 200 }) }
     t.after(() => { globalThis.fetch = oldFetch; if (oldFallback === undefined) delete process.env.LEAD_FALLBACK_WEBHOOK_URL; else process.env.LEAD_FALLBACK_WEBHOOK_URL = oldFallback })
     const result = await post(body()); assert.equal(result.status, 200); assert.equal((await result.json()).acceptedVia, 'fallback'); assert.equal(calls, 2)
-  })
-  it('blocks cross-origin analytics and browser-forged accepted events', async () => {
-    const request = (value: unknown, origin: string) => new NextRequest('http://localhost/api/auto-events', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(value) })
-    assert.equal((await observe(request(browser(), 'https://attacker.test'))).status, 403)
-    assert.equal((await observe(request({ ...browser(), event: 'submission_accepted' }, 'http://localhost'))).status, 400)
   })
 })

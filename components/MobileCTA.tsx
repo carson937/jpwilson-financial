@@ -29,7 +29,7 @@ export default function MobileCTA() {
             links must also leave the tab order — otherwise keyboard users can
             focus a control that screen readers cannot see (WCAG 4.1.2). */}
         <a
-          href="#get-quote"
+          href="#get-quote" data-cta-id="get-quote" data-cta-location="mobile_sticky"
           tabIndex={visible ? 0 : -1}
           className="flex-1 bg-gold hover:bg-gold-dark text-navy-950 text-sm font-semibold py-3.5 text-center transition-colors"
         >

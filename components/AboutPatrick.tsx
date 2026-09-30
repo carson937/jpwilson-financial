@@ -72,7 +72,7 @@ export default function AboutPatrick() {
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <a
-                href="#get-quote"
+                href="#get-quote" data-cta-id="get-quote" data-cta-location="about"
                 className="inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm px-7 py-3.5 transition-colors duration-300 tracking-wide"
               >
                 Request a Free Review

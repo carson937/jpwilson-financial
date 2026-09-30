@@ -100,7 +100,7 @@ export default function HowItWorks() {
             Start with a short request. Patrick will follow up personally.
           </p>
           <a
-            href="#get-quote"
+            href="#get-quote" data-cta-id="get-quote" data-cta-location="how_it_works"
             className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-navy-950 font-semibold text-sm px-7 py-3.5 transition-colors duration-300 tracking-wide"
           >
             Start With a Free Review

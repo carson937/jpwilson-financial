@@ -1,47 +1,55 @@
 'use client'
 
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next'
 import Script from 'next/script'
+import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
+import { attachLinkTracking } from '@/lib/caps-tracking/client'
 import { GA_MEASUREMENT_ID, trackEvent } from '@/lib/analytics'
+import { getTracker } from '@/lib/tracker'
 
 const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
 /**
- * Click tracking for tel:/mailto:/quote anchors, delegated from one listener so
- * every such link is covered (including ones added later) without per-link
- * handlers. `data-track-location` on a link names its placement; otherwise the
- * nearest landmark/section id is used.
+ * Mounted once from the root layout, so every route (landing, funnels, legal) is covered.
+ * GA4 base tag: one <GoogleAnalytics>. Vercel Web Analytics: one <VercelAnalytics>.
+ * CAPS tracker: boots once, tracks route changes, delegates tel:/mailto:/data-cta-id clicks,
+ * and flushes its batch when the page is hidden.
  */
-function linkLocation(a: HTMLAnchorElement) {
-  const explicit = a.closest<HTMLElement>('[data-track-location]')?.dataset.trackLocation
-  if (explicit) return explicit
-  return a.closest('header, nav') ? 'nav' : a.closest('footer') ? 'footer' : a.closest('section[id]')?.id || 'page'
-}
+function TrackerBoot() {
+  const pathname = usePathname()
 
-function onDocumentClick(e: MouseEvent) {
-  const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null
-  if (!a) return
-  const href = a.getAttribute('href') || ''
-  if (href.startsWith('tel:')) trackEvent('phone_cta_clicked', { location: linkLocation(a) })
-  else if (href.startsWith('mailto:')) trackEvent('email_cta_clicked', { location: linkLocation(a) })
-  else if (href === '#get-quote') trackEvent('quote_cta_clicked', { location: linkLocation(a) })
+  useEffect(() => {
+    const tracker = getTracker()
+    if (!tracker) return
+    attachLinkTracking(document, tracker)
+    const flush = () => tracker.flush()
+    const onHide = () => { if (document.visibilityState === 'hidden') flush() }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', flush)
+    const timer = window.setInterval(flush, 5000)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', flush)
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    getTracker()?.pageView()
+    trackEvent('page_view', { path: pathname })
+  }, [pathname])
+
+  return null
 }
 
 export default function Analytics() {
-  useEffect(() => {
-    trackEvent('page_view', {
-      path: window.location.pathname,
-      title: document.title,
-    })
-    document.addEventListener('click', onDocumentClick)
-    return () => document.removeEventListener('click', onDocumentClick)
-  }, [])
-
   return (
     <>
-      {/* GA4 base tag: initialised once, here, from the root layout. */}
       <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
+      <VercelAnalytics />
+      <TrackerBoot />
 
       {metaPixelId && (
         <Script id="meta-pixel-init" strategy="afterInteractive">

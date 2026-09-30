@@ -139,7 +139,7 @@ export default function Services() {
           {services.map((s, i) => (
             <a
               key={s.num}
-              href="#get-quote"
+              href="#get-quote" data-cta-id="get-quote" data-cta-location="services"
               onClick={() => selectService(s.name)}
               className="service-row block -mx-8 md:-mx-14 px-8 md:px-14 py-10 md:py-12 border-b border-navy-900/8 group"
               data-reveal

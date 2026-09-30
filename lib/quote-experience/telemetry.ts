@@ -148,8 +148,3 @@ export function detectDeviceClass(): DeviceClass {
   return window.matchMedia('(max-width: 640px)').matches ? 'mobile' : 'desktop'
 }
 
-export function sendFunnelEvent(event: FunnelTelemetry) {
-  void fetch('/api/funnel-events', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(event), keepalive: true, signal: AbortSignal.timeout(5000) }).catch(() => undefined)
-}
-export const sendAutoEvent = sendFunnelEvent

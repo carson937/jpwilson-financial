@@ -120,7 +120,7 @@ export default function Nav() {
               (866) 786-1585
             </a>
             <a
-              href={quoteHref}
+              href={quoteHref} data-cta-id="get-quote" data-cta-location="nav"
               className="bg-gold hover:bg-gold-dark text-navy-950 text-[13px] font-semibold px-5 py-2.5 tracking-wide transition-colors duration-300"
             >
               Free Review
@@ -175,7 +175,7 @@ export default function Nav() {
             ))}
             <div className="pt-2 border-t border-white/8 flex flex-col gap-3 mt-1">
               <a
-                href={quoteHref}
+                href={quoteHref} data-cta-id="get-quote" data-cta-location="mobile_nav"
                 className="bg-gold text-navy-950 text-sm font-semibold px-5 py-3.5 text-center transition-colors hover:bg-gold-dark tracking-wide"
                 onClick={() => setMenuOpen(false)}
               >
