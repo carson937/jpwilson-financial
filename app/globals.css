@@ -168,7 +168,7 @@ body {
 @media (max-width: 767.98px) {
   /* Clear the sticky bottom CTA plus the home indicator, so the footer and the
      final form button are never trapped underneath it. */
-  body {
+  body:has(.site-mobile-cta) {
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
@@ -208,4 +208,23 @@ select.select-chevron {
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .font-display { font-family: var(--font-playfair), Georgia, serif; }
+}
+
+/* ── QUOTE FUNNEL SURFACE ──
+   The marketing site's body is navy; a quote funnel page is cream end to end.
+   Without this the scrollbar gutter and the iOS overscroll bounce show a strip
+   of dark chrome around a light page. Scoped with :has() so it applies only on
+   a page that actually renders the funnel, and never to the main site. */
+body:has(.qx-surface) {
+  background-color: #FAF8F4;
+}
+
+/* Commercial lead request: quiet inputs, readable optional labels, no decorative field glyphs. */
+.commercial-flow input::placeholder { color: #647080; }
+.commercial-flow input + span { color: inherit; }
+.commercial-flow label span { text-wrap: pretty; }
+.commercial-flow label > span.text-navy-900\/40 { color: #526070; }
+.commercial-flow .group > svg { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .commercial-flow *, .commercial-flow *::before, .commercial-flow *::after { transition: none !important; animation: none !important; }
 }

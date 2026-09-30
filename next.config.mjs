@@ -3,13 +3,45 @@
 /**
  * Baseline security headers.
  *
- * A strict Content-Security-Policy is deliberately NOT set here. GA4, the Meta
- * Pixel, the inline JSON-LD block, and Next's own bootstrap scripts would all
- * need `script-src 'unsafe-inline'`, which strips most of the value while adding
- * real risk of silently breaking analytics in production. A nonce-based CSP is a
- * follow-up task with its own verification pass, not a launch-day change.
+ * This is a compatibility CSP rather than a nonce-based strict CSP: Next's App
+ * Router bootstrap and the optional analytics integrations use inline scripts.
+ * It still confines every other resource type, blocks framing, and prevents the
+ * browser from reaching arbitrary third-party endpoints. A future nonce rollout
+ * must be verified against the optional analytics before removing unsafe-inline.
  */
+/**
+ * `upgrade-insecure-requests` is correct for the deployed HTTPS site, but it
+ * makes Safari/WebKit rewrite every same-origin subresource request (fonts,
+ * images, JS chunks) to `https://`, which fails outright against a plain-HTTP
+ * local server ("A TLS error caused the secure connection to fail" — the page
+ * looks broken because nothing but the initial HTML loads). Chromium does not
+ * enforce this the same way locally, so the break is Safari-specific.
+ *
+ * `LOCAL_PREVIEW_HTTP=1` drops only that one directive for a local `next
+ * start`/`next dev` run. It is never set in the deployed environment, so
+ * production's CSP is byte-for-byte unchanged.
+ */
+const dropHttpsUpgrade = process.env.LOCAL_PREVIEW_HTTP === '1'
+
 const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net",
+      "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com",
+      "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.facebook.com",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "media-src 'self'",
+      "worker-src 'self' blob:",
+      ...(dropHttpsUpgrade ? [] : ['upgrade-insecure-requests']),
+    ].join('; '),
+  },
   // Stop MIME sniffing turning a served asset into script.
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   // No framing: nothing here is meant to be embedded.

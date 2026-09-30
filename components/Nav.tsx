@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import BrandLockup from './BrandLogo'
+import { trackEvent } from '@/lib/analytics'
 
 const navLinks = [
   { label: 'Services', hash: '#services' },
@@ -86,14 +88,14 @@ export default function Nav() {
         <div className="flex items-center justify-between h-[72px] gap-4">
 
           {/* Brand mark — official lockup, light surface (nav is white) */}
-          <a href="/" className="flex items-center flex-shrink-0" aria-label="JP Wilson Financial Group — home">
+          <Link href="/" className="flex items-center flex-shrink-0" aria-label="JP Wilson Financial Group — home">
             <span className="md:hidden">
               <BrandLockup height={30} alt="" />
             </span>
             <span className="hidden md:inline-flex">
               <BrandLockup height={40} alt="" />
             </span>
-          </a>
+          </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8">
@@ -112,7 +114,7 @@ export default function Nav() {
           <div className="hidden md:flex items-center gap-5">
             <a
               href="tel:+18667861585"
-              data-track-location="desktop_nav"
+              onClick={() => trackEvent('phone_cta_clicked', { location: 'desktop_nav' })}
               className="text-[13px] font-medium text-navy-900/65 hover:text-navy-900/90 transition-colors duration-200"
             >
               (866) 786-1585
@@ -181,8 +183,10 @@ export default function Nav() {
               </a>
               <a
                 href="tel:+18667861585"
-                data-track-location="mobile_nav"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  trackEvent('phone_cta_clicked', { location: 'mobile_nav' })
+                  setMenuOpen(false)
+                }}
                 className="flex min-h-11 items-center justify-center text-gold/70 text-center text-sm tracking-wide"
               >
                 (866) 786-1585

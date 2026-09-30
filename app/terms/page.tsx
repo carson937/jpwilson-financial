@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
@@ -77,7 +78,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-gray-100">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 text-navy-800/40 hover:text-navy-950 text-sm transition-colors"
           >
@@ -85,7 +86,7 @@ export default function TermsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
       </main>

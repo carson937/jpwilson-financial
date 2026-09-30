@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { trackEvent } from '@/lib/analytics'
 
 export default function MobileCTA() {
   const [visible, setVisible] = useState(false)
@@ -14,7 +15,7 @@ export default function MobileCTA() {
   return (
     <div
       aria-hidden={!visible}
-      className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${
+      className={`site-mobile-cta fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${
         visible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       }`}
     >
@@ -37,7 +38,7 @@ export default function MobileCTA() {
         <a
           href="tel:+18667861585"
           tabIndex={visible ? 0 : -1}
-          data-track-location="mobile_sticky"
+          onClick={() => trackEvent('phone_cta_clicked', { location: 'mobile_sticky' })}
           className="flex-1 border border-white/20 hover:border-gold text-white text-sm font-semibold py-3.5 text-center flex items-center justify-center gap-1.5 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

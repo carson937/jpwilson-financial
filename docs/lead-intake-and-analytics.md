@@ -3,8 +3,11 @@
 ## Current Lead Path
 
 Website forms submit to `/api/submit-lead`, which normalizes and validates the
-payload before submitting to Jotform form `261496542238059`. Zapier remains the
-downstream automation path from Jotform into EZLynx Sales Center.
+payload and maps product funnels into one internal JP lead schema. Auto, Life,
+and the combined General Liability + Workers Comp funnel attempt AgencyZoom
+first. The established Jotform → Zapier intake remains the recoverable downstream
+path when AgencyZoom is disabled or temporarily unavailable. Legacy website
+forms continue through Jotform. See `docs/agencyzoom-integration.md`.
 
 ## Lead Fields And Jotform Mapping
 
@@ -33,18 +36,20 @@ in a component.
 | source | `q10_leadSource` | Hero Quiz Funnel / Free Quote Form |
 | submissionDate | `q11_submissionDate` | ET timestamp |
 
-State and ZIP are also included in the fallback and notification webhook
-payloads (both spread the full lead object) and in the
-`form_submission_succeeded` analytics event context.
+State and ZIP are included in the optional fallback and notification webhook
+payloads because those are lead-delivery paths. Analytics receives no form
+answers: quote-funnel events contain only the product, version, and step ID;
+legacy-form events contain only the form and coverage category.
 
-EZLynx Create Personal Prospect requires Address Line 1, City, State, and Zip.
-State and Zip carry real submitted values. Address Line 1 and City are mapped in
-the Zap to the honest fixed value `Not collected - online lead`, since the forms
+The downstream CRM's prospect record requires Address Line 1, City, State, and Zip.
+State and Zip carry real submitted values. Address Line 1 and City are mapped in the Zapier
+workflow to the honest fixed value `Not collected - online lead`, since the forms
 intentionally do not collect street address or city.
 
-The API returns success only when Jotform accepts the submission or when an
-optional configured fallback webhook returns a 2xx response. If neither system
-accepts the lead, the visitor is asked to call Patrick directly.
+The API returns success only after AgencyZoom, the established Jotform intake,
+or an optional configured fallback accepts the submission. AgencyZoom dry-run
+is accepted only outside production. If no system accepts the lead, the visitor
+keeps the form state and is asked to call Patrick directly.
 
 ## Fallback Intake
 
@@ -88,18 +93,24 @@ Tracked events:
 The conversion event fires only after `/api/submit-lead` confirms that a lead was
 accepted by Jotform or the configured fallback intake.
 
+The browser does not persist lead fields to URLs, storage, or cookies. The site
+has no session-replay integration. Server logs use request IDs and delivery
+metadata only; they do not log names, phones, emails, ZIP codes, notes, or full
+lead payloads.
+
 ## Scheduling
 
-Set `NEXT_PUBLIC_BOOKING_URL` to Patrick Wilson's verified booking URL when one
+Set `NEXT_PUBLIC_BOOKING_URL` to the advisor's verified booking URL when one
 is available. The "Pick a Time" CTA remains hidden until this value is present.
 
-## Zapier To EZLynx Launch Checklist
+## Lead pipeline launch checklist
 
-1. Obtain the Zapier login.
-2. Activate or repair the Zapier subscription.
-3. Connect the approved EZLynx Sales Center account.
-4. Map Jotform fields to EZLynx Sales Center fields.
-5. Submit one controlled test lead through the website.
-6. Verify the lead record inside EZLynx.
-7. Confirm notification delivery.
-8. Publish the production site.
+The Jotform → Zapier → CRM pipeline is configured **outside this repository**, in the
+Zapier and CRM accounts. Nothing in this checklist is a code change here.
+
+1. Confirm the Zapier workflow is active and connected to the client's CRM account.
+2. Confirm the Jotform → CRM field mapping matches the table above.
+3. Submit one controlled test lead through the website.
+4. Verify the lead record arrives in the CRM.
+5. Confirm notification delivery.
+6. Publish the production site.
