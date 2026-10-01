@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@4d6ce0d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * CAPS -> GA4 mapping. One place decides what leaves the building, so standard GA4
@@ -70,10 +70,14 @@ const OPTIONAL_PARAMS = [
   'funnel_step_index',
   'cta_id',
   'cta_location',
-  'source',
-  'medium',
-  'campaign',
 ] as const satisfies readonly (keyof TrackingEvent)[]
+
+/**
+ * Attribution is sent under caps_* names. GA4 treats bare `source` / `medium` / `campaign` event params as
+ * manual traffic-source overrides (it would re-attribute a direct return visit to an old campaign) and
+ * `client_id` as its own client identifier, so CAPS dimensions must never reuse those names.
+ */
+const ATTRIBUTION_PARAMS = [['source', 'caps_source'], ['medium', 'caps_medium'], ['campaign', 'caps_campaign']] as const satisfies readonly (readonly [keyof TrackingEvent, string])[]
 
 function ga4Params(e: TrackingEvent): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}
@@ -82,9 +86,10 @@ function ga4Params(e: TrackingEvent): Record<string, string | number | boolean> 
     params[name.slice(0, GA4_MAX_PARAM_NAME)] =
       typeof value === 'string' ? value.slice(0, GA4_MAX_PARAM_VALUE) : value
   }
-  put('client_id', e.client_id)
-  put('site_id', e.site_id)
+  put('caps_client', e.client_id)
+  put('caps_site', e.site_id)
   for (const key of OPTIONAL_PARAMS) put(key, e[key])
+  for (const [key, name] of ATTRIBUTION_PARAMS) put(name, e[key])
   return params
 }
 

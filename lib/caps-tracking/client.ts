@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@4d6ce0d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 import { AttributionStore, type StorageLike } from './attribution'
 import { stepIndexOf, type ClientTrackingConfig, type FunnelConfig } from './config'
@@ -67,7 +67,8 @@ export function createTracker(config: ClientTrackingConfig, env: Env): Tracker {
   let session = ''
   let lastActivity = NaN
   let referrerSent = false
-  const seenPages = new Set<string>()
+  let lastPagePath: string | null = null // only CONSECUTIVE identical paths are suppressed (re-render / double effect)
+  let lastPageSession = ''
   const seenStepViews = new Set<string>()
   const completedLeads = new Set<string>()
   const localStarts = new Set<string>()
@@ -225,10 +226,9 @@ export function createTracker(config: ClientTrackingConfig, env: Env): Tracker {
         const step = stepFields(stepId)
         if (step) emit('funnel_step_complete', step)
       },
-      back: (fromStepId) => {
-        const step = stepFields(fromStepId)
-        if (step) emit('funnel_step_view', step)
-      },
+      // Going back is navigation, not progress: it emits nothing (the destination step's own view is counted by
+      // stepView when it renders). Kept in the API so UIs can call it without special-casing.
+      back: () => undefined,
       // An abandon only means something if the visitor actually started this funnel in this session.
       abandon: () => { if (isStarted() && !isComplete()) emit('funnel_abandon', fields) },
       complete: () => { once('fc', 'funnel_complete') },
@@ -238,7 +238,9 @@ export function createTracker(config: ClientTrackingConfig, env: Env): Tracker {
   return {
     pageView: () => {
       const path = env.location.pathname
-      if (!seenPages.has(path) && emit('page_view')) seenPages.add(path)
+      const sid = currentSession(env.now(), false)
+      if (sid !== lastPageSession) { lastPagePath = null; lastPageSession = sid }
+      if (path !== lastPagePath && emit('page_view')) lastPagePath = path
     },
     ctaClick: (ctaId, location) => { emit('cta_click', { cta_id: ctaId, cta_location: location }) },
     phoneClick: (location) => { emit('phone_click', { cta_location: location }) },

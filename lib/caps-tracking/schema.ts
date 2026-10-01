@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@4d6ce0d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * CAPS tracking event contract, version 1.
