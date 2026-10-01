@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@922d2fa — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@b09073e — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * CAPS tracking event contract, version 1.
@@ -108,16 +108,27 @@ const ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/
 /** Step ids mirror product question ids, which may be camelCase (e.g. homeOwnership). */
 const STEP_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/
+/** Marketing labels (utm_*): letters, digits, space and a few separators only. */
+const MARKETING_TEXT_RE = /^[\p{L}\p{N} _.:/+%|-]*$/u
 const PROP_KEY_RE = /^[a-z][a-z0-9_]{0,31}$/
 
 /** String shapes that must never reach an analytics event. */
 const PII_PATTERNS: readonly RegExp[] = [
   /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/, // email
   /(?<!\d)(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}(?!\d)/, // US phone
-  /(?<!\d)\d{3}-?\d{2}-?\d{4}(?!\d)/, // SSN
+  /(?<!\d)\d{3}[ -]?\d{2}[ -]?\d{4}(?!\d)/, // SSN (spaces, dashes or none)
   /(?<!\d)(?:\d[ -]?){13,19}(?!\d)/, // card-like digit run
+  /(?<!\d)(?:19\d{2})[-/.]?(?:0[1-9]|1[0-2])[-/.]?(?:0[1-9]|[12]\d|3[01])(?!\d)/, // DOB-like ISO / compact (19xx)
   /(?<!\d)(?:0?[1-9]|1[0-2])[/-](?:0?[1-9]|[12]\d|3[01])[/-](?:19|20)\d{2}(?!\d)/, // DOB-like date
 ]
+
+/** Digit-only values of 9+ digits (SSN/phone/account-like) are never a legitimate marketing id. */
+export function looksLikeIdentifierPii(value: string): boolean {
+  if (/^\d{9,}$/.test(value)) return true
+  if (/@/.test(value)) return true
+  // Whole-value personal shapes only: generated ids (UUIDs) legitimately contain digit runs.
+  return /^(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/.test(value) || /^\d{3}[ -]\d{2}[ -]\d{4}$/.test(value) || /^19\d{2}[-/.]\d{2}[-/.]\d{2}$/.test(value)
+}
 
 export function looksLikePii(value: string): boolean {
   return PII_PATTERNS.some((re) => re.test(value))
@@ -189,6 +200,15 @@ export function validateEvent(input: unknown, now: number = Date.now()): Validat
     }
     return v
   }
+  // Marketing ids that come from URLs/links: same shape rule plus a PII scan (a link must not smuggle personal data in).
+  const freeId = (name: string): string | undefined => {
+    const v = id(name, false)
+    if (v !== undefined && looksLikeIdentifierPii(v)) {
+      errors.push(`${name} looks like personal data`)
+      return undefined
+    }
+    return v
+  }
   const text = (name: string, max: number = LIMITS.short): string | undefined => {
     const v = input[name]
     if (v === undefined || v === null || v === '') return undefined
@@ -197,6 +217,10 @@ export function validateEvent(input: unknown, now: number = Date.now()): Validat
       return undefined
     }
     const trimmed = v.trim().slice(0, max)
+    if (!MARKETING_TEXT_RE.test(trimmed)) {
+      errors.push(`${name} has unsupported characters`)
+      return undefined
+    }
     if (looksLikePii(trimmed)) {
       errors.push(`${name} looks like personal data`)
       return undefined
@@ -266,7 +290,7 @@ export function validateEvent(input: unknown, now: number = Date.now()): Validat
     funnel_version: id('funnel_version', false),
     funnel_step: id('funnel_step', false, STEP_RE),
     funnel_step_index: typeof funnelStepIndex === 'number' ? funnelStepIndex : undefined,
-    lead_id: id('lead_id', false),
+    lead_id: freeId('lead_id'),
     cta_id: id('cta_id', false, SLUG_RE),
     cta_location: id('cta_location', false, SLUG_RE),
     source: text('source'),
@@ -275,13 +299,13 @@ export function validateEvent(input: unknown, now: number = Date.now()): Validat
     campaign_id: text('campaign_id'),
     content: text('content'),
     term: text('term'),
-    hook_id: id('hook_id', false),
-    post_id: id('post_id', false),
-    content_id: id('content_id', false),
-    ad_id: id('ad_id', false),
-    platform: id('platform', false),
-    experiment_id: id('experiment_id', false),
-    variant_id: id('variant_id', false),
+    hook_id: freeId('hook_id'),
+    post_id: freeId('post_id'),
+    content_id: freeId('content_id'),
+    ad_id: freeId('ad_id'),
+    platform: freeId('platform'),
+    experiment_id: freeId('experiment_id'),
+    variant_id: freeId('variant_id'),
     click_id_kinds,
     device: typeof device === 'string' ? (device as DeviceClass) : undefined,
     props,

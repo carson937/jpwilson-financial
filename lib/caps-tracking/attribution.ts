@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@922d2fa — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@b09073e — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * Durable first-touch + last-touch attribution.
@@ -19,7 +19,7 @@
  *     where the visitor is treated as new again.
  */
 
-import { LIMITS } from './schema'
+import { LIMITS, looksLikeIdentifierPii } from './schema'
 
 export interface StorageLike {
   getItem(k: string): string | null
@@ -133,7 +133,7 @@ export function parseTouch(url: string, referrer: string, now: number, ownHosts:
   const contentIds: Partial<Record<'hook_id' | 'post_id' | 'content_id' | 'ad_id' | 'platform' | 'experiment_id' | 'variant_id', string>> = {}
   for (const [field, param] of [['hook_id', 'hook_id'], ['post_id', 'post_id'], ['content_id', 'content_id'], ['ad_id', 'ad_id'], ['platform', 'platform'], ['experiment_id', 'exp'], ['variant_id', 'variant']] as const) {
     const v = params.get(param)?.trim()
-    if (v && SAFE_ID.test(v)) contentIds[field] = v
+    if (v && SAFE_ID.test(v) && !looksLikeIdentifierPii(v)) contentIds[field] = v
   }
   const hasContentIds = Object.keys(contentIds).length > 0
 
