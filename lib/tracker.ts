@@ -14,12 +14,22 @@ const config: ClientTrackingConfig = {
   ingest_endpoint: process.env.NEXT_PUBLIC_CAPS_INGEST_URL || (jpConfig as ClientTrackingConfig).ingest_endpoint,
 }
 
+/** crypto.randomUUID needs a secure context; fall back to getRandomValues so tracking never silently dies. */
+function randomId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  const b = crypto.getRandomValues(new Uint8Array(16))
+  b[6] = (b[6]! & 0x0f) | 0x40
+  b[8] = (b[8]! & 0x3f) | 0x80
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
+
 const BOT_UA = /bot|crawl|spider|headless|lighthouse|prerender/i
 
 function browserEnv(): Env {
   return {
     now: () => Date.now(),
-    random: () => crypto.randomUUID(),
+    random: randomId,
     storage: window.localStorage,
     sessionStorage: window.sessionStorage,
     get location() {
@@ -52,7 +62,8 @@ export function getTracker(): Tracker | null {
   if (!instance) {
     try {
       instance = createTracker(config, browserEnv())
-    } catch {
+    } catch (error) {
+      console.warn('[caps-tracking] tracker init failed', error)
       return null
     }
   }

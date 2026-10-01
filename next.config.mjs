@@ -46,7 +46,7 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net",
-      `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com${capsOrigin ? ' ' + capsOrigin : ''}`,
+      `connect-src 'self' https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://www.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com${capsOrigin ? ' ' + capsOrigin : ''}`,
       "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.facebook.com",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",

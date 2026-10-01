@@ -40,7 +40,7 @@ const failures = []
 const report = []
 const check = (ok, msg, ctx) => { if (!ok) failures.push(`${ctx}: ${msg}`) }
 
-const browser = await chromium.launch()
+const browser = await chromium.launch({ args: process.env.SMOKE_HOST_RULES ? [`--host-resolver-rules=${process.env.SMOKE_HOST_RULES}`] : [] })
 for (const vp of viewports) {
   const context = await browser.newContext({ userAgent: UA, viewport: { width: vp.width, height: vp.height }, isMobile: vp.isMobile, hasTouch: vp.isMobile })
   for (const p of pages) {
