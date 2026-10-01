@@ -12,6 +12,13 @@
 - **Last verified live:** 2026-07-04
 - **Last local verification:** 2026-07-30 (typecheck, lint, production build, route + mobile QA)
 
+## Analytics (2026-10-01)
+
+- GA4 `G-837LY8SGTM` (one tag from the root layout), Vercel Web Analytics, and the CAPS tracking SDK (vendored in `lib/caps-tracking`,
+  events to the central CAPS analytics API). Funnels: auto, life, commercial, homepage quiz/form.
+- Verify a deploy: `node scripts/analytics-smoke.mjs https://www.jpwilsonfinancial.com --ingest-host caps-analytics.vercel.app`.
+- Key events to mark in GA4: `generate_lead`, `quote_complete`.
+
 ## Integrations
 
 | Integration | Status | Notes |
