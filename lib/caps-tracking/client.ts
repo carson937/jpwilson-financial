@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@5862151 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@922d2fa — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 import { AttributionStore, type StorageLike } from './attribution'
 import { stepIndexOf, type ClientTrackingConfig, type FunnelConfig } from './config'
@@ -205,6 +205,10 @@ export function createTracker(config: ClientTrackingConfig, env: Env): Tracker {
         write(env.sessionStorage, sessionKey(kind), sid)
       }
     }
+    const isStarted = (): boolean => {
+      const sid = currentSession(env.now(), false)
+      return read(env.sessionStorage, sessionKey('fs')) === sid || localStarts.has(sid)
+    }
     const isComplete = (): boolean => {
       const sid = currentSession(env.now(), false)
       return read(env.sessionStorage, sessionKey('fc')) === sid || localCompletes.has(sid)
@@ -225,7 +229,8 @@ export function createTracker(config: ClientTrackingConfig, env: Env): Tracker {
         const step = stepFields(fromStepId)
         if (step) emit('funnel_step_view', step)
       },
-      abandon: () => { if (!isComplete()) emit('funnel_abandon', fields) },
+      // An abandon only means something if the visitor actually started this funnel in this session.
+      abandon: () => { if (isStarted() && !isComplete()) emit('funnel_abandon', fields) },
       complete: () => { once('fc', 'funnel_complete') },
     }
   }
