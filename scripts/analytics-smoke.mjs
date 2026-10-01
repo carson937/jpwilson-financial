@@ -48,14 +48,21 @@ for (const vp of viewports) {
     const page = await context.newPage()
     const batches = []
     const ga = []
+    const vercelHits = []
     page.on('request', (req) => {
       const url = req.url()
-      if (req.method() === 'POST' && url.includes(ingestHost) && req.postData()) {
-        try { batches.push(...(JSON.parse(req.postData()).events ?? [])) } catch { failures.push(`${ctx}: ingest body is not JSON`) }
-      }
+      if (/\/(view|event)(\?|$)/.test(new URL(url).pathname) && new URL(url).origin === new URL(base).origin) vercelHits.push(url)
       if (/google-analytics\.com\/g\/collect|analytics\.google\.com\/g\/collect/.test(url)) ga.push(url + (req.postData() ? `?${req.postData()}` : ''))
     })
-    if (mock) await page.route((u) => u.toString().includes(ingestHost) && !u.toString().startsWith(base + '/_next'), (route) => route.fulfill({ status: 202, contentType: 'application/json', body: '{"accepted":1,"duplicates":0,"rejected":0}' }))
+    // Beacon bodies are only readable through route interception; record, then mock or pass through.
+    await page.route((u) => u.toString().includes(ingestHost) && !u.toString().includes('/_next/'), async (route) => {
+      const req = route.request()
+      if (req.method() === 'POST' && req.postData()) {
+        try { batches.push(...(JSON.parse(req.postData()).events ?? [])) } catch { failures.push(`${ctx}: ingest body is not JSON`) }
+      }
+      if (mock || req.method() !== 'POST') return route.fulfill({ status: 202, contentType: 'application/json', body: '{"accepted":1,"duplicates":0,"rejected":0}' })
+      return route.continue()
+    })
 
     const url = `${base}${p.path}?utm_source=caps_smoke&utm_medium=test&utm_campaign=smoke`
     const res = await page.goto(url, { waitUntil: 'load' })
@@ -66,13 +73,15 @@ for (const vp of viewports) {
       gtagScripts: document.querySelectorAll(`script[src*="gtag/js?id=${id}"]`).length,
       gaInit: document.querySelectorAll('#_next-ga-init').length,
       configs: (window.dataLayer || []).filter((e) => e && e[0] === 'config' && e[1] === id).length,
-      vercel: document.querySelectorAll('script[src*="_vercel/insights"]').length,
+      vercel: document.querySelectorAll('script[data-sdkn^="@vercel/analytics"], script[src*="_vercel/insights"]').length,
       overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
     }), GA_ID)
     check(dom.gtagScripts === 1, `expected 1 GA4 script, found ${dom.gtagScripts}`, ctx)
     check(dom.gaInit === 1, `expected 1 GA4 init, found ${dom.gaInit}`, ctx)
     check(dom.configs === 1, `expected 1 GA4 config, found ${dom.configs}`, ctx)
     if (base.startsWith('https://')) check(dom.vercel >= 1, 'Vercel Web Analytics script missing', ctx)
+    // Vercel's SDK skips automated browsers (navigator.webdriver), so a missing hit is only a warning here; confirm in real Chrome.
+    if (base.startsWith('https://') && vercelHits.length === 0) console.warn(`WARN ${ctx}: no Vercel /view hit (automation is suppressed by the SDK)`)
     check(!dom.overflowX, 'horizontal overflow', ctx)
 
     // Interactions: phone click (prevent navigation), funnel start.
