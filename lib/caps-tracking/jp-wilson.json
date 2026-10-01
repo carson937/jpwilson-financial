@@ -44,7 +44,8 @@
           "id": "preferences",
           "label": "Preferences"
         }
-      ]
+      ],
+      "live": false
     },
     {
       "id": "life",
@@ -74,7 +75,8 @@
           "id": "contact",
           "label": "Contact"
         }
-      ]
+      ],
+      "live": false
     },
     {
       "id": "commercial",
@@ -112,7 +114,8 @@
           "id": "contact",
           "label": "Contact"
         }
-      ]
+      ],
+      "live": false
     },
     {
       "id": "home-quiz",
@@ -138,7 +141,8 @@
           "id": "contact",
           "label": "Contact"
         }
-      ]
+      ],
+      "live": true
     },
     {
       "id": "bottom-form",
@@ -152,7 +156,8 @@
           "id": "form",
           "label": "Form"
         }
-      ]
+      ],
+      "live": true
     }
   ]
 }
