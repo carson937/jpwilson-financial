@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@b09073e — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 import { AttributionStore, type StorageLike } from './attribution'
 import { stepIndexOf, type ClientTrackingConfig, type FunnelConfig } from './config'

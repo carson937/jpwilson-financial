@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@b09073e — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * CAPS tracking event contract, version 1.
@@ -109,7 +109,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/
 /** Step ids mirror product question ids, which may be camelCase (e.g. homeOwnership). */
 const STEP_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/
 /** Marketing labels (utm_*): letters, digits, space and a few separators only. */
-const MARKETING_TEXT_RE = /^[\p{L}\p{N} _.:/+%|-]*$/u
+const MARKETING_TEXT_RE = /^[A-Za-z0-9\u00C0-\u024F _.:/+%|-]*$/
 const PROP_KEY_RE = /^[a-z][a-z0-9_]{0,31}$/
 
 /** String shapes that must never reach an analytics event. */

@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@b09073e — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@d6700b6 — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * CAPS -> GA4 mapping. One place decides what leaves the building, so standard GA4
