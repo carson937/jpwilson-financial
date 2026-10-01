@@ -76,7 +76,7 @@
           "label": "Contact"
         }
       ],
-      "live": false
+      "live": true
     },
     {
       "id": "commercial",
