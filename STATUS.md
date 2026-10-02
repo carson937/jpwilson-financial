@@ -60,3 +60,9 @@ git push --force-with-lease origin main    # only if remote must match reset
 - Do not commit `.env.local` or any file containing Jotform API keys / EZLynx creds
 
 See `SOURCE_OF_TRUTH.md` for the full deploy + verification protocol.
+
+## Short attribution links (/go/<code>) — 2026-10-02
+- `app/go/[code]/route.ts` redirects a registered code to a funnel path with attribution params (registry: `lib/go/links.json`, logic: vendored `lib/caps-tracking/go.ts`). The redirect records nothing and is never cached; a visit is counted only when the destination loads and CAPS tracking reads the params. Unknown/expired codes go to `/` with no params.
+- Register codes with `bun <caps-tracking>/scripts/go-link.ts add --config lib/caps-tracking/jp-wilson.json --registry lib/go/links.json --origin https://www.jpwilsonfinancial.com ...` (see caps-tracking docs/ONBOARDING.md).
+- `chk-auto` is a verification link (`utm_medium=test`, never stored by ingest).
+- Auto funnel is now `live: true` in the CAPS config (dashboard visibility).

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "links": [
+    {
+      "code": "chk-auto",
+      "dest": "/auto-insurance/quote",
+      "utm_source": "caps_go_check",
+      "utm_medium": "test",
+      "utm_campaign": "jp-go-check",
+      "post_id": "chk-001",
+      "exp": "jp-go-check",
+      "variant": "a",
+      "platform": "web",
+      "expires": "2026-12-31",
+      "note": "verification link: utm_medium=test is acknowledged but never stored by CAPS ingest"
+    }
+  ]
+}

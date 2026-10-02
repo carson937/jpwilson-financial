@@ -45,7 +45,7 @@
           "label": "Preferences"
         }
       ],
-      "live": false
+      "live": true
     },
     {
       "id": "life",

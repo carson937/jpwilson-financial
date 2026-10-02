@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@4d6ce0d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@cc4701d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * Durable first-touch + last-touch attribution.

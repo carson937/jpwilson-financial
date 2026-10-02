@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@4d6ce0d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@cc4701d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * Declarative per-client tracking config. Onboarding a client = one of these objects.
@@ -19,6 +19,8 @@ export interface FunnelConfig {
   steps: FunnelStepConfig[]
   /** Route prefixes that belong to this funnel (longest prefix wins). */
   paths: string[]
+  /** Defaults to true. Dashboards list only live funnels; set false for built-but-unlaunched funnels (tracking still works). */
+  live?: boolean
 }
 
 export interface ClientTrackingConfig {
@@ -86,4 +88,9 @@ export function stepIndexOf(funnel: FunnelConfig, stepId: string): number {
 export function hostAllowed(cfg: ClientTrackingConfig, host: string): boolean {
   const h = host.toLowerCase().replace(/:\d+$/, '')
   return cfg.domains.some((d) => h === d || h === `www.${d}` || (d.startsWith('www.') && h === d.slice(4)))
+}
+
+/** Ids of funnels that are actually live (live !== false). */
+export function liveFunnelIds(cfg: ClientTrackingConfig): string[] {
+  return cfg.funnels.filter((f) => f.live !== false).map((f) => f.id)
 }
