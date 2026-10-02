@@ -103,19 +103,21 @@ describe('/go/<code> route', () => {
     }
   })
 
-  it('the QA proof code uses the stored QA lane and the six T1 codes are organic Facebook Auto arms', () => {
+  it('the QA proof code uses the stored QA lane and the four T1 post codes are organic Facebook Auto arms with per-arm campaigns', () => {
     const byCode = new Map(GO_REGISTRY.links.map((l) => [l.code, l]))
     assert.equal(byCode.get('qa-auto')?.utm_medium, 'qa')
-    for (const arm of ['a', 'b']) {
-      for (const v of [1, 2, 3]) {
-        const l = byCode.get(`fb-${arm}-v${v}`)
-        assert.ok(l, `fb-${arm}-v${v} missing`)
-        assert.equal(l.dest, '/auto-insurance/quote')
-        assert.equal(l.utm_medium, 'organic')
-        assert.equal(l.utm_source, 'facebook')
-        assert.equal(l.exp, 'jp-auto-t1')
-        assert.equal(l.variant, arm)
-      }
+    const posts: Array<[string, string, string]> = [['fb-a-p1', 'a', 't1-p01'], ['fb-b-p2', 'b', 't1-p02'], ['fb-b-p3', 'b', 't1-p03'], ['fb-a-p4', 'a', 't1-p04']]
+    for (const [code, arm, post] of posts) {
+      const l = byCode.get(code)
+      assert.ok(l, `${code} missing`)
+      assert.equal(l.dest, '/auto-insurance/quote')
+      assert.equal(l.utm_medium, 'organic')
+      assert.equal(l.utm_source, 'facebook')
+      assert.equal(l.exp, 'jp-auto-t1')
+      assert.equal(l.utm_campaign, `jp-auto-t1${arm}`) // one campaign per arm so the dashboard's By-campaign table splits the arms
+      assert.equal(l.variant, arm)
+      assert.equal(l.post_id, post)
     }
+    assert.equal(byCode.get('fb-a-v1'), undefined, 'retired codes from the earlier plan must not be live')
   })
 })
