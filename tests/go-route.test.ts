@@ -91,4 +91,31 @@ describe('/go/<code> route', () => {
   it('short link fits a 125-character Roomvu caption with room for copy', () => {
     assert.ok('https://www.jpwilsonfinancial.com/go/chk-auto'.length < 50)
   })
+
+  it('every shipped code points at a configured funnel route and carries its own post_id', async () => {
+    for (const link of GO_REGISTRY.links) {
+      const res = await call(GET, `/go/${link.code}`)
+      const u = dest(res)
+      assert.equal(res.status, 302, link.code)
+      assert.equal(u.pathname, link.dest, link.code)
+      assert.ok(funnelForPath(GO_CONFIG, u.pathname), `${link.code}: dest not in a funnel`)
+      assert.equal(u.searchParams.get('post_id'), link.post_id ?? null, link.code)
+    }
+  })
+
+  it('the QA proof code uses the stored QA lane and the six T1 codes are organic Facebook Auto arms', () => {
+    const byCode = new Map(GO_REGISTRY.links.map((l) => [l.code, l]))
+    assert.equal(byCode.get('qa-auto')?.utm_medium, 'qa')
+    for (const arm of ['a', 'b']) {
+      for (const v of [1, 2, 3]) {
+        const l = byCode.get(`fb-${arm}-v${v}`)
+        assert.ok(l, `fb-${arm}-v${v} missing`)
+        assert.equal(l.dest, '/auto-insurance/quote')
+        assert.equal(l.utm_medium, 'organic')
+        assert.equal(l.utm_source, 'facebook')
+        assert.equal(l.exp, 'jp-auto-t1')
+        assert.equal(l.variant, arm)
+      }
+    }
+  })
 })

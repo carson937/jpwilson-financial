@@ -1,4 +1,4 @@
-// VENDORED from @caps/tracking@cc4701d — do not edit here; change caps-tracking and re-run scripts-vendor.sh
+// VENDORED from @caps/tracking@084a2ae — do not edit here; change caps-tracking and re-run scripts-vendor.sh
 
 /**
  * Declarative per-client tracking config. Onboarding a client = one of these objects.
@@ -43,6 +43,7 @@ const HOST_RE = /^(?=.{1,253}$)([a-z0-9-]+\.)+[a-z]{2,}$|^localhost$/
 export function validateConfig(cfg: ClientTrackingConfig): string[] {
   const errors: string[] = []
   if (!SLUG_RE.test(cfg.client_id)) errors.push('client_id must be a lowercase slug')
+  if (cfg.client_id.endsWith('--qa')) errors.push('client_id may not end in --qa (reserved for the QA traffic lane)')
   if (!SLUG_RE.test(cfg.site_id)) errors.push('site_id must be a lowercase slug')
   if (!cfg.domains.length) errors.push('at least one domain is required')
   for (const d of cfg.domains) if (!HOST_RE.test(d)) errors.push(`invalid domain: ${d}`)

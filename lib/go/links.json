@@ -103,6 +103,19 @@
       "content_id": "rvx-minimum-q-b-v3",
       "expires": "2026-12-31",
       "note": "T1 video v3 arm b"
+    },
+    {
+      "code": "qa-auto",
+      "dest": "/auto-insurance/quote",
+      "utm_source": "caps_qa",
+      "utm_medium": "qa",
+      "utm_campaign": "jp-qa-plumbing",
+      "post_id": "qa-001",
+      "exp": "jp-qa-plumbing",
+      "variant": "a",
+      "platform": "web",
+      "expires": "2026-12-31",
+      "note": "QA proof link: utm_medium=qa is stored under jp-wilson--qa and excluded from jp-wilson dashboards"
     }
   ]
 }
